@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--slate-50);
+    padding: 16px;
+    display: flex;
+    
+  }
+  
+    .cards { display: flex; gap: 12px; width: 100%; }
+    .card { flex: 1; background: #fff; border: 1px solid var(--slate-200); border-radius: var(--radius-md); padding: 14px; font-family: var(--font-sans); display: flex; flex-direction: column; gap: 6px; }
+    .stat-card .stat-label { font-size: 12px; color: var(--slate-500); font-weight: 500; }
+    .stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--slate-900); font-variant-numeric: tabular-nums; }
+    .stat-bar { height: 4px; background: var(--slate-100); border-radius: 999px; }
+    .stat-fill { height: 100%; background: var(--green-500); border-radius: 999px; }
+    .exam-top { display: flex; }
+    .badge { font-size: 11px; font-weight: 600; background: var(--amber-100); color: var(--amber-700); padding: 2px 8px; border-radius: 999px; }
+    .exam-title { font-size: 15px; font-weight: 600; color: var(--slate-900); }
+    .exam-meta { font-size: 12px; color: var(--slate-500); }
+    .flash-card { background: var(--blue-50); border-color: var(--blue-200); }
+    .flash-label { font-size: 11px; font-weight: 600; color: var(--blue-500); }
+    .flash-q { font-size: 14px; font-weight: 500; color: var(--slate-800); }
+    .flash-hint { font-size: 11px; color: var(--slate-400); margin-top: auto; }
+  
+</style>
+</head>
+<body>
+<div class="cards">
+  <div class="card stat-card">
+    <div class="stat-label">Richtige Antworten</div>
+    <div class="stat-value">78%</div>
+    <div class="stat-bar"><div class="stat-fill" style="width: 78%"></div></div>
+  </div>
+  <div class="card exam-card">
+    <div class="exam-top">
+      <span class="badge">In 5 Tagen</span>
+    </div>
+    <div class="exam-title">Lineare Algebra II</div>
+    <div class="exam-meta">24 Karteikarten · 3 Probeklausuren</div>
+  </div>
+  <div class="card flash-card">
+    <div class="flash-label">Karteikarte 7/24</div>
+    <div class="flash-q">Was ist eine lineare Abbildung?</div>
+    <div class="flash-hint">Tippen zum Aufdecken</div>
+  </div>
+</div>
+</body>
+</html>

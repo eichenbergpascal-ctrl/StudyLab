@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    font-family: var(--font-sans);
+    background: #FFFFFF;
+    padding: 14px 24px;
+    display: flex;
+    
+  }
+  
+    .tokens { display: flex; flex-direction: column; gap: 3px; width: 100%; }
+    .row { display: flex; align-items: center; gap: 10px; }
+    .label { font-size: 11px; font-weight: 600; font-family: var(--font-mono); color: var(--slate-500); width: 24px; text-align: right; }
+    .bar { height: 14px; background: var(--blue-200); border-radius: 3px; min-width: 4px; }
+    .val { font-size: 10px; font-family: var(--font-mono); color: var(--slate-400); }
+  
+</style>
+</head>
+<body>
+<div class="tokens">
+  
+    <div class="row">
+      <span class="label">1</span>
+      <div class="bar" style="width: 4px"></div>
+      <span class="val">4px</span>
+    </div>
+    <div class="row">
+      <span class="label">2</span>
+      <div class="bar" style="width: 8px"></div>
+      <span class="val">8px</span>
+    </div>
+    <div class="row">
+      <span class="label">3</span>
+      <div class="bar" style="width: 12px"></div>
+      <span class="val">12px</span>
+    </div>
+    <div class="row">
+      <span class="label">4</span>
+      <div class="bar" style="width: 16px"></div>
+      <span class="val">16px</span>
+    </div>
+    <div class="row">
+      <span class="label">6</span>
+      <div class="bar" style="width: 24px"></div>
+      <span class="val">24px</span>
+    </div>
+    <div class="row">
+      <span class="label">8</span>
+      <div class="bar" style="width: 32px"></div>
+      <span class="val">32px</span>
+    </div>
+    <div class="row">
+      <span class="label">10</span>
+      <div class="bar" style="width: 40px"></div>
+      <span class="val">40px</span>
+    </div>
+    <div class="row">
+      <span class="label">12</span>
+      <div class="bar" style="width: 48px"></div>
+      <span class="val">48px</span>
+    </div>
+    <div class="row">
+      <span class="label">16</span>
+      <div class="bar" style="width: 64px"></div>
+      <span class="val">64px</span>
+    </div>
+</div>
+</body>
+</html>

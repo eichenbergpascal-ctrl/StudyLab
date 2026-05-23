@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StudyLab — UI Kit</title>
+<link rel="stylesheet" href="../../colors_and_type.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { width: 100%; height: 100%; overflow: hidden; }
+  body { font-family: var(--font-sans); background: var(--slate-50); color: var(--slate-900); }
+  #root { display: flex; }
+  .sl-icon { line-height: 0; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="Components.jsx"></script>
+<script type="text/babel" src="Sidebar.jsx"></script>
+<script type="text/babel" src="Dashboard.jsx"></script>
+<script type="text/babel" src="FlashcardSession.jsx"></script>
+<script type="text/babel" src="QuizView.jsx"></script>
+<script type="text/babel" src="SummaryViewer.jsx"></script>
+
+<script type="text/babel">
+function App() {
+  const [view, setView] = React.useState('dashboard');
+
+  const views = {
+    dashboard: React.createElement(Dashboard),
+    flashcards: React.createElement(FlashcardSession),
+    quiz: React.createElement(QuizView),
+    summaries: React.createElement(SummaryViewer),
+    errors: React.createElement(ErrorTracking),
+  };
+
+  return React.createElement(React.Fragment, null,
+    React.createElement(Sidebar, { currentView: view, onNavigate: setView }),
+    views[view] || views.dashboard
+  );
+}
+
+/* Fehler-Tracking (inline — small view) */
+function ErrorTracking() {
+  const items = [
+    { q: 'Was ist der Rang einer Matrix?', topic: 'Matrizen', attempts: 3, lastWrong: 'Vor 2 Tagen' },
+    { q: 'Wie berechnet man die Determinante einer 3×3 Matrix?', topic: 'Determinanten', attempts: 2, lastWrong: 'Gestern' },
+    { q: 'Definition: Eigenwert und Eigenvektor', topic: 'Eigenwerte', attempts: 4, lastWrong: 'Vor 3 Tagen' },
+    { q: 'Wann ist eine lineare Abbildung injektiv?', topic: 'Lineare Abb.', attempts: 2, lastWrong: 'Heute' },
+    { q: 'Was besagt der Dimensionssatz?', topic: 'Vektorräume', attempts: 1, lastWrong: 'Vor 1 Woche' },
+  ];
+
+  const es = {
+    root: { flex: 1, padding: '28px 32px', overflowY: 'auto', background: 'var(--slate-50)' },
+    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' },
+    title: { fontSize: '24px', fontWeight: 700, color: 'var(--slate-900)', letterSpacing: '-0.02em' },
+    subtitle: { fontSize: '14px', color: 'var(--slate-500)', marginTop: '4px' },
+    table: { width: '100%', borderCollapse: 'separate', borderSpacing: 0 },
+    th: { fontSize: '12px', fontWeight: 600, color: 'var(--slate-400)', textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid var(--slate-200)', textTransform: 'uppercase', letterSpacing: '0.04em' },
+    td: { fontSize: '14px', color: 'var(--slate-700)', padding: '12px', borderBottom: '1px solid var(--slate-100)' },
+    qText: { fontWeight: 500, color: 'var(--slate-800)', maxWidth: '360px' },
+  };
+
+  return React.createElement('div', { style: es.root },
+    React.createElement('div', { style: es.header },
+      React.createElement('div', null,
+        React.createElement('h1', { style: es.title }, 'Fehler-Tracking'),
+        React.createElement('p', { style: es.subtitle }, '5 Fragen zum Wiederholen — sortiert nach Häufigkeit'),
+      ),
+      React.createElement(Button, { variant: 'primary', icon: 'rotateCcw' }, 'Alle wiederholen'),
+    ),
+    React.createElement(Card, { style: { padding: 0, overflow: 'hidden' } },
+      React.createElement('table', { style: es.table },
+        React.createElement('thead', null,
+          React.createElement('tr', null,
+            React.createElement('th', { style: es.th }, 'Frage'),
+            React.createElement('th', { style: es.th }, 'Thema'),
+            React.createElement('th', { style: es.th }, 'Fehlversuche'),
+            React.createElement('th', { style: es.th }, 'Zuletzt falsch'),
+            React.createElement('th', { style: es.th }, ''),
+          )
+        ),
+        React.createElement('tbody', null,
+          items.map((item, i) => React.createElement('tr', { key: i },
+            React.createElement('td', { style: { ...es.td, ...es.qText } }, item.q),
+            React.createElement('td', { style: es.td }, React.createElement(Badge, { color: 'slate' }, item.topic)),
+            React.createElement('td', { style: es.td },
+              React.createElement('span', { style: { fontWeight: 600, color: item.attempts >= 3 ? 'var(--red-500)' : 'var(--amber-600)', fontVariantNumeric: 'tabular-nums' } }, `${item.attempts}×`)
+            ),
+            React.createElement('td', { style: { ...es.td, color: 'var(--slate-500)', fontSize: '13px' } }, item.lastWrong),
+            React.createElement('td', { style: es.td },
+              React.createElement(Button, { variant: 'ghost', icon: 'rotateCcw', size: 'sm' }, 'Üben')
+            ),
+          ))
+        )
+      )
+    ),
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(App));
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--slate-50);
+    padding: 16px;
+    display: flex;
+    align-items: stretch;
+  }
+  
+    .surfaces { display: flex; gap: 8px; width: 100%; height: 100%; }
+    .surface { flex: 1; border-radius: 8px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between; min-height: 72px; }
+    .name { font-size: 12px; font-weight: 600; }
+    .val { font-size: 10px; font-family: var(--font-mono); opacity: 0.6; }
+  
+</style>
+</head>
+<body>
+<div class="surfaces">
+  <div class="surface" style="background: #FFFFFF; border: 1px solid var(--slate-200);">
+    <span class="name">Card</span>
+    <span class="val">#FFFFFF</span>
+  </div>
+  <div class="surface" style="background: var(--slate-50);">
+    <span class="name">Page BG</span>
+    <span class="val">#F8FAFB</span>
+  </div>
+  <div class="surface" style="background: var(--slate-100);">
+    <span class="name">Muted</span>
+    <span class="val">#F1F4F7</span>
+  </div>
+  <div class="surface" style="background: var(--slate-200);">
+    <span class="name">Border</span>
+    <span class="val">#E3E8ED</span>
+  </div>
+  <div class="surface" style="background: var(--blue-50);">
+    <span class="name">Active BG</span>
+    <span class="val">#F1F5FB</span>
+  </div>
+  <div class="surface" style="background: var(--slate-900); color: #fff;">
+    <span class="name">Inverse</span>
+    <span class="val">#1E242E</span>
+  </div>
+</div>
+</body>
+</html>

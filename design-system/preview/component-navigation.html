@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    font-family: var(--font-sans);
+    background: #FFFFFF;
+    padding: 16px 20px;
+    display: flex;
+    
+  }
+  
+    .nav-group { display: flex; gap: 20px; width: 100%; font-family: var(--font-sans); }
+    .sidebar { display: flex; flex-direction: column; gap: 2px; width: 200px; flex-shrink: 0; }
+    .nav-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; font-size: 13px; font-weight: 500; color: var(--slate-600); border-radius: 6px; cursor: pointer; }
+    .nav-item.active { background: var(--blue-50); color: var(--blue-600); font-weight: 600; }
+    .tabs-group { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+    .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--slate-200); }
+    .tab { padding: 8px 14px; font-size: 13px; font-weight: 500; color: var(--slate-500); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .tab.active { color: var(--blue-600); border-bottom-color: var(--blue-500); font-weight: 600; }
+    .breadcrumbs { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+    .bc-item { color: var(--slate-400); font-weight: 500; }
+    .bc-item.current { color: var(--slate-700); }
+    .bc-sep { color: var(--slate-300); }
+  
+</style>
+</head>
+<body>
+<div class="nav-group">
+  <div class="sidebar">
+    <div class="nav-item active"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Dashboard</div>
+    <div class="nav-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 4v16"/></svg>Karteikarten</div>
+    <div class="nav-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>Probeklausuren</div>
+    <div class="nav-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>Zusammenfassungen</div>
+  </div>
+  <div class="tabs-group">
+    <div class="tabs">
+      <div class="tab active">Alle</div>
+      <div class="tab">Informatik</div>
+      <div class="tab">Mathematik</div>
+    </div>
+    <div class="breadcrumbs">
+      <span class="bc-item">Dashboard</span>
+      <span class="bc-sep">›</span>
+      <span class="bc-item">Lineare Algebra II</span>
+      <span class="bc-sep">›</span>
+      <span class="bc-item current">Karteikarten</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

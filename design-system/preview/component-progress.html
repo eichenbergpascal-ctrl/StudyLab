@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    font-family: var(--font-sans);
+    background: #FFFFFF;
+    padding: 20px 24px;
+    display: flex;
+    
+  }
+  
+    .groups { display: flex; flex-direction: column; gap: 14px; width: 100%; font-family: var(--font-sans); }
+    .row { display: flex; gap: 16px; align-items: center; }
+    .prog-wrap { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .prog-bar { height: 6px; background: var(--slate-100); border-radius: 999px; overflow: hidden; }
+    .prog-fill { height: 100%; border-radius: 999px; transition: width 300ms; }
+    .prog-label { font-size: 12px; color: var(--slate-500); font-weight: 500; }
+    .ring-wrap { position: relative; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center; }
+    .ring-val { position: absolute; font-size: 13px; font-weight: 700; color: var(--slate-800); }
+    .streak { display: flex; flex-direction: column; gap: 4px; }
+    .streak-days { display: flex; gap: 4px; }
+    .day { width: 28px; height: 28px; border-radius: 6px; background: var(--slate-100); display: flex; align-items: center; justify-content: center; }
+    .day.done { background: var(--green-500); }
+    .day-label { font-size: 10px; font-weight: 600; color: var(--slate-500); }
+    .day.done .day-label { color: #fff; }
+    .streak-label { font-size: 12px; color: var(--slate-500); font-weight: 500; }
+  
+</style>
+</head>
+<body>
+<div class="groups">
+  <div class="row">
+    <div class="prog-wrap">
+      <div class="prog-bar"><div class="prog-fill" style="width: 65%; background: var(--blue-500);"></div></div>
+      <span class="prog-label">65% gelernt</span>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-bar"><div class="prog-fill" style="width: 42%; background: var(--green-500);"></div></div>
+      <span class="prog-label">42% korrekt</span>
+    </div>
+  </div>
+  <div class="row">
+    <div class="ring-wrap">
+      <svg width="52" height="52" viewBox="0 0 52 52">
+        <circle cx="26" cy="26" r="22" stroke="#E3E8ED" stroke-width="4" fill="none"/>
+        <circle cx="26" cy="26" r="22" stroke="#5178C0" stroke-width="4" fill="none" stroke-linecap="round" stroke-dasharray="138.2" stroke-dashoffset="48.4" transform="rotate(-90 26 26)"/>
+      </svg>
+      <span class="ring-val">65%</span>
+    </div>
+    <div class="streak">
+      <div class="streak-days">
+        <div class="day done"><span class="day-label">Mo</span></div><div class="day done"><span class="day-label">Di</span></div><div class="day done"><span class="day-label">Mi</span></div><div class="day done"><span class="day-label">Do</span></div><div class="day done"><span class="day-label">Fr</span></div><div class="day "><span class="day-label">Sa</span></div><div class="day "><span class="day-label">So</span></div>
+      </div>
+      <span class="streak-label">5 Tage Streak</span>
+    </div>
+  </div>
+</div>
+</body>
+</html>

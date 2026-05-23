@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    font-family: var(--font-sans);
+    background: #FFFFFF;
+    padding: 20px 24px;
+    display: flex;
+    
+  }
+  
+    .groups { display: flex; flex-direction: column; gap: 12px; font-family: var(--font-sans); }
+    .row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .badge { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
+    .badge.blue { background: var(--blue-100); color: var(--blue-700); }
+    .badge.green { background: var(--green-100); color: var(--green-700); }
+    .badge.amber { background: var(--amber-100); color: var(--amber-700); }
+    .badge.red { background: var(--red-100); color: var(--red-700); }
+    .badge.slate { background: var(--slate-100); color: var(--slate-600); }
+    .pill { font-size: 13px; font-weight: 500; padding: 5px 14px; border-radius: 999px; border: 1px solid var(--slate-200); color: var(--slate-600); background: #fff; }
+    .pill.active { background: var(--blue-500); color: #fff; border-color: var(--blue-500); }
+    .status { font-size: 13px; color: var(--slate-600); display: flex; align-items: center; gap: 6px; font-weight: 500; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .green-dot { background: var(--green-500); }
+    .amber-dot { background: var(--amber-500); }
+    .red-dot { background: var(--red-500); }
+  
+</style>
+</head>
+<body>
+<div class="groups">
+  <div class="row">
+    <span class="badge blue">Informatik</span>
+    <span class="badge green">Bestanden</span>
+    <span class="badge amber">Ausstehend</span>
+    <span class="badge red">Nicht bestanden</span>
+    <span class="badge slate">Entwurf</span>
+  </div>
+  <div class="row">
+    <span class="pill">Mathematik</span>
+    <span class="pill">Physik</span>
+    <span class="pill">BWL</span>
+    <span class="pill active">Informatik</span>
+  </div>
+  <div class="row">
+    <span class="status"><span class="dot green-dot"></span>Bereit</span>
+    <span class="status"><span class="dot amber-dot"></span>In Bearbeitung</span>
+    <span class="status"><span class="dot red-dot"></span>Überfällig</span>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  body {
+    font-family: var(--font-sans);
+    background: #FFFFFF;
+    padding: 20px 24px;
+    display: flex;
+    
+  }
+  
+    .specimen { display: flex; flex-direction: column; gap: 10px; }
+    .sample { font-family: var(--font-mono); font-size: 22px; font-weight: 600; color: var(--slate-900); }
+    .code-block { font-family: var(--font-mono); font-size: 13px; line-height: 1.7; color: var(--slate-700); background: var(--slate-50); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--slate-200); }
+    .kw { color: var(--blue-600); }
+    .num { color: var(--green-600); }
+    .cm { color: var(--slate-400); }
+    .usages { display: flex; gap: 6px; }
+    .tag { font-size: 11px; font-weight: 500; font-family: var(--font-sans); padding: 2px 8px; background: var(--slate-100); border-radius: 999px; color: var(--slate-500); }
+  
+</style>
+</head>
+<body>
+<div class="specimen">
+  <div class="sample">JetBrains Mono</div>
+  <div class="code-block"><span class="kw">const</span> score = <span class="num">42</span> / totalQuestions * <span class="num">100</span>;<br><span class="kw">const</span> passed = score >= <span class="num">60</span>; <span class="cm">// Bestanden</span></div>
+  <div class="usages">
+    <span class="tag">Statistics</span>
+    <span class="tag">Code snippets</span>
+    <span class="tag">Tabular data</span>
+    <span class="tag">Timestamps</span>
+  </div>
+</div>
+</body>
+</html>

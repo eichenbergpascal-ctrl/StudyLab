@@ -1,0 +1,228 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* ============================================================
+   StudyLab — Global Styles & Design Tokens
+
+   Token source: design-system/colors_and_type.css
+   Tailwind 4: semantic tokens live in @theme inline,
+   raw color palette and semantic CSS vars live in :root.
+   ============================================================ */
+
+:root {
+  /* --- Raw color palette: Primary Blue --- */
+  --blue-50:  #F1F5FB;
+  --blue-100: #E0EAF6;
+  --blue-200: #C6D5EE;
+  --blue-300: #9FB8E1;
+  --blue-400: #7196D1;
+  --blue-500: #5178C0;
+  --blue-600: #3F60A8;
+  --blue-700: #354F8A;
+  --blue-800: #304472;
+  --blue-900: #2B3B5F;
+  --blue-950: #1C263E;
+
+  /* --- Raw color palette: Neutral Slate --- */
+  --slate-50:  #F8FAFB;
+  --slate-100: #F1F4F7;
+  --slate-200: #E3E8ED;
+  --slate-300: #CDD4DC;
+  --slate-400: #9BA5B4;
+  --slate-500: #6B7688;
+  --slate-600: #535D6E;
+  --slate-700: #424B59;
+  --slate-800: #2D343F;
+  --slate-900: #1E242E;
+  --slate-950: #13171E;
+
+  /* --- Raw color palette: Success Green --- */
+  --green-50:  #F0FAF4;
+  --green-100: #D9F2E4;
+  --green-200: #B5E4CB;
+  --green-300: #83D0AA;
+  --green-400: #4EB885;
+  --green-500: #36A06E;
+  --green-600: #2B8158;
+  --green-700: #256848;
+  --green-800: #21533B;
+  --green-900: #1D4532;
+  --green-950: #0E271C;
+
+  /* --- Raw color palette: Warning Amber --- */
+  --amber-50:  #FFFBEB;
+  --amber-100: #FEF3C7;
+  --amber-200: #FDE68A;
+  --amber-300: #FCD34D;
+  --amber-400: #FBBF24;
+  --amber-500: #D4960A;
+  --amber-600: #B47A08;
+  --amber-700: #8C5E06;
+  --amber-800: #724D05;
+  --amber-900: #5E4005;
+  --amber-950: #362303;
+
+  /* --- Raw color palette: Error Red --- */
+  --red-50:  #FEF2F2;
+  --red-100: #FEE2E2;
+  --red-200: #FECACA;
+  --red-300: #FCA5A5;
+  --red-400: #F87171;
+  --red-500: #DC4A4A;
+  --red-600: #C13030;
+  --red-700: #A12828;
+  --red-800: #842525;
+  --red-900: #6E2222;
+  --red-950: #3D1010;
+
+  /* --- Semantic tokens (shadcn-compatible) ---
+     Used by shadcn components via @theme inline below. */
+  --background:         #F8FAFB;
+  --foreground:         #1E242E;
+  --card:               #FFFFFF;
+  --card-foreground:    #1E242E;
+  --popover:            #FFFFFF;
+  --popover-foreground: #1E242E;
+  --primary:            #5178C0;
+  --primary-foreground: #FFFFFF;
+  --secondary:          #E3E8ED;
+  --secondary-foreground: #424B59;
+  --muted:              #E3E8ED;
+  --muted-foreground:   #6B7688;
+  --accent:             #F1F4F7;
+  --accent-foreground:  #424B59;
+  --destructive:        #DC4A4A;
+  --destructive-foreground: #FFFFFF;
+  --success:            #36A06E;
+  --success-foreground: #FFFFFF;
+  --warning:            #D4960A;
+  --warning-foreground: #362303;
+  --border:             #E3E8ED;
+  --input:              #CDD4DC;
+  --ring:               #5178C0;
+}
+
+/* --- Static theme overrides (no CSS var references) --- */
+@theme {
+  /* Border radius — overrides TW4 defaults to match 4px-grid design system */
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+  --radius-2xl:  20px;
+
+  /* Shadows — Notion-style subtle elevation */
+  --shadow-xs: 0 1px 2px rgba(30, 36, 46, 0.04);
+  --shadow-sm: 0 1px 3px rgba(30, 36, 46, 0.06), 0 1px 2px rgba(30, 36, 46, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(30, 36, 46, 0.06), 0 2px 4px -2px rgba(30, 36, 46, 0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(30, 36, 46, 0.06), 0 4px 6px -4px rgba(30, 36, 46, 0.02);
+  --shadow-xl: 0 20px 25px -5px rgba(30, 36, 46, 0.07), 0 8px 10px -6px rgba(30, 36, 46, 0.02);
+}
+
+/* --- Dynamic theme values (reference :root custom properties) --- */
+@theme inline {
+  /* Semantic color tokens → Tailwind utility classes
+     e.g. bg-primary, text-foreground, border-border */
+  --color-background:         var(--background);
+  --color-foreground:         var(--foreground);
+  --color-card:               var(--card);
+  --color-card-foreground:    var(--card-foreground);
+  --color-popover:            var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary:            var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary:          var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted:              var(--muted);
+  --color-muted-foreground:   var(--muted-foreground);
+  --color-accent:             var(--accent);
+  --color-accent-foreground:  var(--accent-foreground);
+  --color-destructive:        var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success:            var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning:            var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border:             var(--border);
+  --color-input:              var(--input);
+  --color-ring:               var(--ring);
+
+  /* Raw palette as Tailwind utilities (e.g. bg-blue-500, text-slate-700) */
+  --color-blue-50:  #F1F5FB;
+  --color-blue-100: #E0EAF6;
+  --color-blue-200: #C6D5EE;
+  --color-blue-300: #9FB8E1;
+  --color-blue-400: #7196D1;
+  --color-blue-500: #5178C0;
+  --color-blue-600: #3F60A8;
+  --color-blue-700: #354F8A;
+  --color-blue-800: #304472;
+  --color-blue-900: #2B3B5F;
+  --color-blue-950: #1C263E;
+
+  --color-slate-50:  #F8FAFB;
+  --color-slate-100: #F1F4F7;
+  --color-slate-200: #E3E8ED;
+  --color-slate-300: #CDD4DC;
+  --color-slate-400: #9BA5B4;
+  --color-slate-500: #6B7688;
+  --color-slate-600: #535D6E;
+  --color-slate-700: #424B59;
+  --color-slate-800: #2D343F;
+  --color-slate-900: #1E242E;
+  --color-slate-950: #13171E;
+
+  --color-green-50:  #F0FAF4;
+  --color-green-100: #D9F2E4;
+  --color-green-200: #B5E4CB;
+  --color-green-300: #83D0AA;
+  --color-green-400: #4EB885;
+  --color-green-500: #36A06E;
+  --color-green-600: #2B8158;
+  --color-green-700: #256848;
+  --color-green-800: #21533B;
+  --color-green-900: #1D4532;
+  --color-green-950: #0E271C;
+
+  --color-amber-50:  #FFFBEB;
+  --color-amber-100: #FEF3C7;
+  --color-amber-200: #FDE68A;
+  --color-amber-300: #FCD34D;
+  --color-amber-400: #FBBF24;
+  --color-amber-500: #D4960A;
+  --color-amber-600: #B47A08;
+  --color-amber-700: #8C5E06;
+  --color-amber-800: #724D05;
+  --color-amber-900: #5E4005;
+  --color-amber-950: #362303;
+
+  --color-red-50:  #FEF2F2;
+  --color-red-100: #FEE2E2;
+  --color-red-200: #FECACA;
+  --color-red-300: #FCA5A5;
+  --color-red-400: #F87171;
+  --color-red-500: #DC4A4A;
+  --color-red-600: #C13030;
+  --color-red-700: #A12828;
+  --color-red-800: #842525;
+  --color-red-900: #6E2222;
+  --color-red-950: #3D1010;
+
+  /* Font families — reference CSS variables set by next/font on <html> */
+  --font-sans:  var(--font-plus-jakarta-sans);
+  --font-serif: var(--font-source-serif-4);
+  --font-mono:  var(--font-jetbrains-mono);
+}
+
+/* --- Base styles --- */
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  border-color: var(--border);
+}
