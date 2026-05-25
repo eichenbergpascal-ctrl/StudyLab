@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY")!
 
@@ -184,10 +185,60 @@ async function callAnthropic(
   })
 }
 
-// ---- Core processing ------------------------------------------------------
+// ---- Rate limiting --------------------------------------------------------
 
 // deno-lint-ignore no-explicit-any
 type SupabaseClient = ReturnType<typeof createClient<any>>
+
+async function checkRateLimit(
+  supabase: SupabaseClient,
+  userId: string,
+  action: string,
+  maxPerHour: number
+): Promise<boolean> {
+  const { data: existing } = await supabase
+    .from("rate_limits")
+    .select("count, window_start")
+    .eq("user_id", userId)
+    .eq("action", action)
+    .single()
+
+  const now = new Date()
+  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
+
+  if (!existing) {
+    await supabase.from("rate_limits").insert({
+      user_id: userId,
+      action,
+      window_start: now.toISOString(),
+      count: 1,
+    })
+    return true
+  }
+
+  const windowStart = new Date(existing.window_start)
+  if (windowStart < oneHourAgo) {
+    await supabase
+      .from("rate_limits")
+      .update({ count: 1, window_start: now.toISOString() })
+      .eq("user_id", userId)
+      .eq("action", action)
+    return true
+  }
+
+  if (existing.count >= maxPerHour) {
+    return false
+  }
+
+  await supabase
+    .from("rate_limits")
+    .update({ count: existing.count + 1 })
+    .eq("user_id", userId)
+    .eq("action", action)
+  return true
+}
+
+// ---- Core processing ------------------------------------------------------
 
 async function processSummary(
   supabase: SupabaseClient,
@@ -326,8 +377,8 @@ Deno.serve(async (req: Request) => {
     })
   }
 
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !ANTHROPIC_API_KEY) {
-    console.error("Missing required environment variables: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, or ANTHROPIC_API_KEY")
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY || !ANTHROPIC_API_KEY) {
+    console.error("Missing required environment variables")
     return new Response(
       JSON.stringify({ error: "Server misconfiguration: missing environment variables" }),
       { status: 500, headers: { ...CORS_HEADERS, "content-type": "application/json" } }
@@ -346,8 +397,32 @@ Deno.serve(async (req: Request) => {
     })
   }
 
+  // Validate user JWT before creating the service role client
+  const authHeader = req.headers.get("Authorization") ?? ""
+  const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    global: { headers: { Authorization: authHeader } },
+  })
+  const { data: { user }, error: authError } = await userClient.auth.getUser()
+  if (authError || !user) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...CORS_HEADERS, "content-type": "application/json" },
+    })
+  }
+
+  // Service role client created only after successful auth
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
 
+  // Rate limit: max 5 process-summary calls per user per hour
+  const allowed = await checkRateLimit(supabase, user.id, "process-summary", 5)
+  if (!allowed) {
+    return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+      status: 429,
+      headers: { ...CORS_HEADERS, "content-type": "application/json" },
+    })
+  }
+
+  // Fetch summary and verify ownership: summary → block → exam → user_id
   const { data: summary, error: fetchError } = await supabase
     .from("summaries")
     .select("id, storage_path, processing_status, block_id")
@@ -356,7 +431,33 @@ Deno.serve(async (req: Request) => {
 
   if (fetchError || !summary) {
     return new Response(JSON.stringify({ error: "Summary not found" }), {
-      status: 400,
+      status: 404,
+      headers: { ...CORS_HEADERS, "content-type": "application/json" },
+    })
+  }
+
+  const { data: block } = await supabase
+    .from("blocks")
+    .select("id, exam_id")
+    .eq("id", summary.block_id)
+    .single()
+
+  if (!block) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...CORS_HEADERS, "content-type": "application/json" },
+    })
+  }
+
+  const { data: exam } = await supabase
+    .from("exams")
+    .select("id, user_id")
+    .eq("id", block.exam_id)
+    .single()
+
+  if (!exam || exam.user_id !== user.id) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
       headers: { ...CORS_HEADERS, "content-type": "application/json" },
     })
   }

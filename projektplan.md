@@ -274,6 +274,56 @@ Diese Dinge müssen VOR dem ersten Claude-Code-Prompt erledigt sein:
 
 ---
 
+## Etappe 7.5 — UX-Feinschliff & Modell-Anpassung ✅
+
+**Ziel:** UX-Verbesserungen auf Basis erster Nutzungstests. Modellwahl für Nachgenerierung optimiert.
+
+**Umgesetzt:**
+- Diverse UX-Anpassungen an bestehenden Komponenten (Karteikarten, Probeklausuren, Fehler-Pool, Viewer)
+- **Modell-Upgrade Nachgenerierung:** `regenerate-content` Edge Function nutzt jetzt `claude-sonnet-4-6` statt `claude-haiku-4-5` für höhere Qualität bei on-demand generierten Flashcards und Exam Questions
+- **Offen:** Die initiale Processing-Pipeline (`process-summary` → `generate-section`) läuft weiterhin auf `claude-haiku-4-5-20251001`. Upgrade auf Sonnet ist noch nicht entschieden (Trade-off: Qualität vs. Kosten bei Bulk-Generierung)
+
+**Abhängigkeiten:** Etappe 7 abgeschlossen.
+
+---
+
+## Etappe 7.6 — Security-Hardening 🔄
+
+**Ziel:** Sicherheitslücken schließen. Auth-Checks, Rate Limiting, Middleware und Security Headers einbauen.
+
+**Befunde aus Security-Analyse:**
+- `process-summary` Edge Function hatte KEINEN Auth-Check — jeder mit der öffentlichen Supabase-URL konnte Anthropic-API-Kosten auslösen
+- `regenerate-content` hatte Auth, aber kein Rate Limiting
+- Keine Next.js Middleware für zentralen Auth-Guard
+- Keine Security Headers in `next.config.ts`
+- CORS auf `*` (wird nach Vercel-Deploy separat eingeschränkt)
+
+**Scope:**
+- Auth-Check in `process-summary`: JWT validieren + Ownership-Prüfung (Summary → Block → Exam → user_id)
+- Rate Limiting (DB-basiert, keine externe Dependency):
+  - Neue Tabelle `rate_limits` mit RLS
+  - `process-summary`: max 5 Calls pro User/Stunde
+  - `regenerate-content`: max 20 Calls pro User/Stunde
+- Next.js Auth-Middleware (`src/middleware.ts`): Session-Refresh, Auth-Guard, Login-Redirect
+- Security Headers in `next.config.ts`: X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+
+**Nicht in Scope:**
+- CORS-Einschränkung (erst nach Vercel-Deploy, wenn Domain feststeht)
+- CSP-Header (eigener Task, zu komplex)
+
+**Abhängigkeiten:** Etappe 7.5 abgeschlossen. Kein Vercel-Deploy nötig.
+
+**Test-Checkpoint:**
+- [ ] `process-summary` lehnt Requests ohne JWT mit 401 ab
+- [ ] `process-summary` lehnt Requests für fremde Summaries mit 403 ab
+- [ ] >5 `process-summary`-Calls/Stunde → 429
+- [ ] >20 `regenerate-content`-Calls/Stunde → 429
+- [ ] Unauthentifizierter Zugriff auf `/klausuren` → Redirect zu `/login`
+- [ ] Security Headers in Response sichtbar
+- [ ] Bestehende Funktionalität (Upload → Processing → Karteikarten) funktioniert weiterhin
+
+---
+
 ## Etappe 8 — Polish, Edge Cases & Hardening
 
 **Ziel:** Alle lose Enden schließen. Fehlerzustände abfangen. UX-Feinschliff.
@@ -331,6 +381,12 @@ Etappe 6 — Fehler-Tracking
          │
          ▼
 Etappe 7 — Lernfortschritt & Viewer-Erweiterung
+         │
+         ▼
+Etappe 7.5 — UX-Feinschliff & Modell-Anpassung ✅
+         │
+         ▼
+Etappe 7.6 — Security-Hardening 🔄
          │
          ▼
 Etappe 8 — Polish & Hardening

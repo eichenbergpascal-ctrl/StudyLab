@@ -310,6 +310,59 @@ async function callAnthropic(
   })
 }
 
+// ---- Rate limiting ----------------------------------------------------------
+
+// deno-lint-ignore no-explicit-any
+type SupabaseClient = ReturnType<typeof createClient<any>>
+
+async function checkRateLimit(
+  supabase: SupabaseClient,
+  userId: string,
+  action: string,
+  maxPerHour: number
+): Promise<boolean> {
+  const { data: existing } = await supabase
+    .from("rate_limits")
+    .select("count, window_start")
+    .eq("user_id", userId)
+    .eq("action", action)
+    .single()
+
+  const now = new Date()
+  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
+
+  if (!existing) {
+    await supabase.from("rate_limits").insert({
+      user_id: userId,
+      action,
+      window_start: now.toISOString(),
+      count: 1,
+    })
+    return true
+  }
+
+  const windowStart = new Date(existing.window_start)
+  if (windowStart < oneHourAgo) {
+    await supabase
+      .from("rate_limits")
+      .update({ count: 1, window_start: now.toISOString() })
+      .eq("user_id", userId)
+      .eq("action", action)
+    return true
+  }
+
+  if (existing.count >= maxPerHour) {
+    return false
+  }
+
+  await supabase
+    .from("rate_limits")
+    .update({ count: existing.count + 1 })
+    .eq("user_id", userId)
+    .eq("action", action)
+  return true
+}
+
 // ---- Handler ----------------------------------------------------------------
 
 Deno.serve(async (req: Request) => {
@@ -344,6 +397,18 @@ Deno.serve(async (req: Request) => {
     })
   }
 
+  // Service role client created once, after successful auth
+  const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+
+  // Rate limit: max 20 regenerate-content calls per user per hour
+  const allowed = await checkRateLimit(serviceClient, user.id, "regenerate-content", 20)
+  if (!allowed) {
+    return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
+      status: 429,
+      headers: { ...CORS_HEADERS, "content-type": "application/json" },
+    })
+  }
+
   // Parse body
   let sectionId: string
   let mode: GenerationMode = "flashcards_only"
@@ -366,8 +431,6 @@ Deno.serve(async (req: Request) => {
   }
 
   // Verify section ownership: sections → summaries → blocks → exams → user_id
-  const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-
   const { data: section } = await serviceClient
     .from("sections")
     .select("id, title, content_text, summary_id")
