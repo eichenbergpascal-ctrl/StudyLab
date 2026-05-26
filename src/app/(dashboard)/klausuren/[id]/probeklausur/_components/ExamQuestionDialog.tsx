@@ -13,7 +13,14 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog"
 
-type QuestionType = "free_text" | "mc" | "fill_blank" | "matching"
+type QuestionType =
+  | "free_text"
+  | "mc"
+  | "fill_blank"
+  | "matching"
+  | "true_false"
+  | "ordering"
+  | "calculation"
 
 export type ExamQuestionFormData = {
   question_type: QuestionType
@@ -37,11 +44,23 @@ const TYPE_LABELS: Record<QuestionType, string> = {
   mc: "Multiple Choice",
   fill_blank: "Lückentext",
   matching: "Zuordnung",
+  true_false: "Wahr/Falsch",
+  ordering: "Reihenfolge",
+  calculation: "Rechenaufgabe",
 }
 
-const TYPES: QuestionType[] = ["free_text", "mc", "fill_blank", "matching"]
+const TYPES: QuestionType[] = [
+  "free_text",
+  "mc",
+  "fill_blank",
+  "matching",
+  "true_false",
+  "ordering",
+  "calculation",
+]
 
-const TEXTAREA = "resize-none rounded-lg border border-input bg-transparent px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 w-full"
+const TEXTAREA =
+  "resize-none rounded-lg border border-input bg-transparent px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 w-full"
 
 export function ExamQuestionDialog({
   open,
@@ -80,6 +99,25 @@ export function ExamQuestionDialog({
   ])
   const [matchExplanation, setMatchExplanation] = useState("")
 
+  // true_false
+  const [tfStatement, setTfStatement] = useState("")
+  const [tfIsTrue, setTfIsTrue] = useState<boolean | null>(null)
+  const [tfExplanation, setTfExplanation] = useState("")
+
+  // ordering
+  const [ordInstruction, setOrdInstruction] = useState("")
+  const [ordItems, setOrdItems] = useState(["", ""])
+  const [ordExplanation, setOrdExplanation] = useState("")
+
+  // calculation
+  const [calcQuestion, setCalcQuestion] = useState("")
+  const [calcFormulaHint, setCalcFormulaHint] = useState("")
+  const [calcCorrectValue, setCalcCorrectValue] = useState("")
+  const [calcTolerance, setCalcTolerance] = useState("")
+  const [calcUnit, setCalcUnit] = useState("")
+  const [calcSolutionSteps, setCalcSolutionSteps] = useState([""])
+  const [calcExplanation, setCalcExplanation] = useState("")
+
   const blanksCount = useMemo(() => {
     const matches = [...fbText.matchAll(/\{\{(\d+)\}\}/g)]
     return new Set(matches.map((m) => parseInt(m[1]))).size
@@ -100,6 +138,8 @@ export function ExamQuestionDialog({
     if (!open) return
     const type = initialQuestionType ?? "free_text"
     setQuestionType(type)
+
+    // Reset all fields
     setFtQuestion("")
     setFtAnswer("")
     setMcQuestion("")
@@ -115,6 +155,19 @@ export function ExamQuestionDialog({
       { left: "", right: "" },
     ])
     setMatchExplanation("")
+    setTfStatement("")
+    setTfIsTrue(null)
+    setTfExplanation("")
+    setOrdInstruction("")
+    setOrdItems(["", ""])
+    setOrdExplanation("")
+    setCalcQuestion("")
+    setCalcFormulaHint("")
+    setCalcCorrectValue("")
+    setCalcTolerance("")
+    setCalcUnit("")
+    setCalcSolutionSteps([""])
+    setCalcExplanation("")
 
     const qd = initialQuestionData ?? {}
     const ad = initialAnswerData ?? {}
@@ -137,6 +190,25 @@ export function ExamQuestionDialog({
       const right = (qd.right as string[]) ?? ["", "", ""]
       setMatchPairs(left.map((l, i) => ({ left: l, right: right[i] ?? "" })))
       setMatchExplanation((ad.explanation as string) ?? "")
+    } else if (type === "true_false") {
+      setTfStatement((qd.statement as string) ?? "")
+      const it = ad.is_true
+      setTfIsTrue(typeof it === "boolean" ? it : null)
+      setTfExplanation((ad.explanation as string) ?? "")
+    } else if (type === "ordering") {
+      setOrdInstruction((qd.instruction as string) ?? "")
+      setOrdItems((qd.items as string[]) ?? ["", ""])
+      setOrdExplanation((ad.explanation as string) ?? "")
+    } else if (type === "calculation") {
+      setCalcQuestion((qd.question as string) ?? "")
+      setCalcFormulaHint((qd.formula_hint as string) ?? "")
+      const cv = ad.correct_value
+      setCalcCorrectValue(cv != null ? String(cv) : "")
+      const tol = ad.tolerance
+      setCalcTolerance(tol != null ? String(tol) : "")
+      setCalcUnit((ad.unit as string) ?? "")
+      setCalcSolutionSteps((ad.solution_steps as string[]) ?? [""])
+      setCalcExplanation((ad.explanation as string) ?? "")
     }
   }, [open])
 
@@ -152,6 +224,16 @@ export function ExamQuestionDialog({
       return !fbText.trim() || blanksCount === 0 || fbBlanks.some((b) => !b.trim())
     if (questionType === "matching")
       return matchPairs.filter((p) => p.left.trim() && p.right.trim()).length < 2
+    if (questionType === "true_false")
+      return !tfStatement.trim() || tfIsTrue === null
+    if (questionType === "ordering")
+      return !ordInstruction.trim() || ordItems.filter((i) => i.trim()).length < 2
+    if (questionType === "calculation")
+      return (
+        !calcQuestion.trim() ||
+        !calcCorrectValue.trim() ||
+        calcSolutionSteps.filter((s) => s.trim()).length === 0
+      )
     return true
   }, [
     questionType,
@@ -164,6 +246,13 @@ export function ExamQuestionDialog({
     blanksCount,
     fbBlanks,
     matchPairs,
+    tfStatement,
+    tfIsTrue,
+    ordInstruction,
+    ordItems,
+    calcQuestion,
+    calcCorrectValue,
+    calcSolutionSteps,
   ])
 
   function handleSubmit() {
@@ -197,12 +286,40 @@ export function ExamQuestionDialog({
           explanation: matchExplanation.trim(),
         },
       })
+    } else if (questionType === "true_false") {
+      onSubmit({
+        question_type: "true_false",
+        question_data: { statement: tfStatement.trim() },
+        answer_data: { is_true: tfIsTrue!, explanation: tfExplanation.trim() },
+      })
+    } else if (questionType === "ordering") {
+      const items = ordItems.filter((i) => i.trim()).map((i) => i.trim())
+      onSubmit({
+        question_type: "ordering",
+        question_data: { instruction: ordInstruction.trim(), items },
+        answer_data: {
+          correct_order: items.map((_, i) => i),
+          explanation: ordExplanation.trim(),
+        },
+      })
+    } else if (questionType === "calculation") {
+      const steps = calcSolutionSteps.filter((s) => s.trim()).map((s) => s.trim())
+      const answerData: Record<string, unknown> = {
+        correct_value: parseFloat(calcCorrectValue),
+        solution_steps: steps,
+        explanation: calcExplanation.trim(),
+      }
+      if (calcTolerance.trim()) answerData.tolerance = parseFloat(calcTolerance)
+      if (calcUnit.trim()) answerData.unit = calcUnit.trim()
+      const questionData: Record<string, unknown> = { question: calcQuestion.trim() }
+      if (calcFormulaHint.trim()) questionData.formula_hint = calcFormulaHint.trim()
+      onSubmit({ question_type: "calculation", question_data: questionData, answer_data: answerData })
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>
             {mode === "create" ? "Aufgabe hinzufügen" : "Aufgabe bearbeiten"}
@@ -213,7 +330,7 @@ export function ExamQuestionDialog({
           {/* Type picker */}
           <div className="flex flex-col gap-1.5">
             <Label>Fragetyp</Label>
-            <div className="grid grid-cols-2 gap-1.5">
+            <div className="grid grid-cols-4 gap-1.5">
               {TYPES.map((type) => (
                 <Button
                   key={type}
@@ -424,6 +541,247 @@ export function ExamQuestionDialog({
                   id="match-explanation"
                   value={matchExplanation}
                   onChange={(e) => setMatchExplanation(e.target.value)}
+                  placeholder="Zusätzliche Erklärung…"
+                  rows={2}
+                  className={TEXTAREA}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Wahr/Falsch */}
+          {questionType === "true_false" && (
+            <>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="tf-statement">Aussage</Label>
+                <textarea
+                  id="tf-statement"
+                  value={tfStatement}
+                  onChange={(e) => setTfStatement(e.target.value)}
+                  placeholder="Aussage eingeben, die wahr oder falsch ist…"
+                  rows={3}
+                  className={TEXTAREA}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label>Richtige Antwort</Label>
+                <div className="flex gap-3">
+                  <label className="flex cursor-pointer items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="tf-answer"
+                      checked={tfIsTrue === true}
+                      onChange={() => setTfIsTrue(true)}
+                      className="h-4 w-4 accent-primary"
+                    />
+                    Wahr
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-2 text-sm">
+                    <input
+                      type="radio"
+                      name="tf-answer"
+                      checked={tfIsTrue === false}
+                      onChange={() => setTfIsTrue(false)}
+                      className="h-4 w-4 accent-primary"
+                    />
+                    Falsch
+                  </label>
+                </div>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="tf-explanation">Erklärung (optional)</Label>
+                <textarea
+                  id="tf-explanation"
+                  value={tfExplanation}
+                  onChange={(e) => setTfExplanation(e.target.value)}
+                  placeholder="Warum ist die Aussage wahr/falsch?"
+                  rows={2}
+                  className={TEXTAREA}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Reihenfolge */}
+          {questionType === "ordering" && (
+            <>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="ord-instruction">Instruktion</Label>
+                <textarea
+                  id="ord-instruction"
+                  value={ordInstruction}
+                  onChange={(e) => setOrdInstruction(e.target.value)}
+                  placeholder="Was soll in die richtige Reihenfolge gebracht werden?"
+                  rows={2}
+                  className={TEXTAREA}
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <Label>Elemente in der richtigen Reihenfolge eingeben</Label>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Elemente so eingeben wie sie in korrekter Reihenfolge auftreten.
+                </p>
+                {ordItems.map((item, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="w-6 shrink-0 text-xs font-medium text-muted-foreground">
+                      {i + 1}.
+                    </span>
+                    <Input
+                      value={item}
+                      onChange={(e) => {
+                        const next = [...ordItems]
+                        next[i] = e.target.value
+                        setOrdItems(next)
+                      }}
+                      placeholder={`Element ${i + 1}`}
+                      className="h-8 text-sm"
+                    />
+                    {ordItems.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOrdItems((prev) => prev.filter((_, j) => j !== i))
+                        }
+                        className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        <X className="size-3.5" strokeWidth={2} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="w-fit gap-1 text-xs text-muted-foreground"
+                  onClick={() => setOrdItems((prev) => [...prev, ""])}
+                  disabled={ordItems.length >= 8}
+                >
+                  <Plus className="size-3" strokeWidth={2} />
+                  Element hinzufügen
+                </Button>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="ord-explanation">Erklärung (optional)</Label>
+                <textarea
+                  id="ord-explanation"
+                  value={ordExplanation}
+                  onChange={(e) => setOrdExplanation(e.target.value)}
+                  placeholder="Zusätzliche Erklärung…"
+                  rows={2}
+                  className={TEXTAREA}
+                />
+              </div>
+            </>
+          )}
+
+          {/* Rechenaufgabe */}
+          {questionType === "calculation" && (
+            <>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="calc-question">Frage</Label>
+                <textarea
+                  id="calc-question"
+                  value={calcQuestion}
+                  onChange={(e) => setCalcQuestion(e.target.value)}
+                  placeholder="Rechenaufgabe eingeben…"
+                  rows={3}
+                  className={TEXTAREA}
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="calc-formula">Formelhinweis (optional)</Label>
+                <Input
+                  id="calc-formula"
+                  value={calcFormulaHint}
+                  onChange={(e) => setCalcFormulaHint(e.target.value)}
+                  placeholder="Relevante Formel als Hilfestellung…"
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div className="flex gap-3">
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <Label htmlFor="calc-value">Korrekter Wert</Label>
+                  <Input
+                    id="calc-value"
+                    type="number"
+                    value={calcCorrectValue}
+                    onChange={(e) => setCalcCorrectValue(e.target.value)}
+                    placeholder="z.B. 42.5"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div className="flex w-28 flex-col gap-1.5">
+                  <Label htmlFor="calc-unit">Einheit (optional)</Label>
+                  <Input
+                    id="calc-unit"
+                    value={calcUnit}
+                    onChange={(e) => setCalcUnit(e.target.value)}
+                    placeholder="z.B. €"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div className="flex w-28 flex-col gap-1.5">
+                  <Label htmlFor="calc-tolerance">Toleranz (optional)</Label>
+                  <Input
+                    id="calc-tolerance"
+                    type="number"
+                    value={calcTolerance}
+                    onChange={(e) => setCalcTolerance(e.target.value)}
+                    placeholder="± 0.1"
+                    className="h-8 text-sm"
+                  />
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label>Lösungsschritte</Label>
+                {calcSolutionSteps.map((step, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <span className="w-6 shrink-0 text-xs font-medium text-muted-foreground">
+                      {i + 1}.
+                    </span>
+                    <Input
+                      value={step}
+                      onChange={(e) => {
+                        const next = [...calcSolutionSteps]
+                        next[i] = e.target.value
+                        setCalcSolutionSteps(next)
+                      }}
+                      placeholder={`Schritt ${i + 1}`}
+                      className="h-8 text-sm"
+                    />
+                    {calcSolutionSteps.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCalcSolutionSteps((prev) => prev.filter((_, j) => j !== i))
+                        }
+                        className="shrink-0 rounded p-0.5 text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        <X className="size-3.5" strokeWidth={2} />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="w-fit gap-1 text-xs text-muted-foreground"
+                  onClick={() => setCalcSolutionSteps((prev) => [...prev, ""])}
+                >
+                  <Plus className="size-3" strokeWidth={2} />
+                  Schritt hinzufügen
+                </Button>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label htmlFor="calc-explanation">Erklärung (optional)</Label>
+                <textarea
+                  id="calc-explanation"
+                  value={calcExplanation}
+                  onChange={(e) => setCalcExplanation(e.target.value)}
                   placeholder="Zusätzliche Erklärung…"
                   rows={2}
                   className={TEXTAREA}

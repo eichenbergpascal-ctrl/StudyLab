@@ -10,6 +10,9 @@ import { McQuestion } from "@/app/(dashboard)/klausuren/[id]/probeklausur/_compo
 import { FillBlankQuestion } from "@/app/(dashboard)/klausuren/[id]/probeklausur/_components/question-types/FillBlankQuestion"
 import { MatchingQuestion } from "@/app/(dashboard)/klausuren/[id]/probeklausur/_components/question-types/MatchingQuestion"
 import { FreeTextQuestion } from "@/app/(dashboard)/klausuren/[id]/probeklausur/_components/question-types/FreeTextQuestion"
+import { TrueFalseQuestion } from "@/app/(dashboard)/klausuren/[id]/probeklausur/_components/question-types/TrueFalseQuestion"
+import { OrderingQuestion } from "@/app/(dashboard)/klausuren/[id]/probeklausur/_components/question-types/OrderingQuestion"
+import { CalculationQuestion } from "@/app/(dashboard)/klausuren/[id]/probeklausur/_components/question-types/CalculationQuestion"
 
 type Phase = "session" | "end"
 
@@ -31,6 +34,12 @@ function QuestionRenderer({
       return <MatchingQuestion key={question.id} question={question} onRate={onRate} disabled={disabled} />
     case "free_text":
       return <FreeTextQuestion key={question.id} question={question} onRate={onRate} disabled={disabled} />
+    case "true_false":
+      return <TrueFalseQuestion key={question.id} question={question} onRate={onRate} disabled={disabled} />
+    case "ordering":
+      return <OrderingQuestion key={question.id} question={question} onRate={onRate} disabled={disabled} />
+    case "calculation":
+      return <CalculationQuestion key={question.id} question={question} onRate={onRate} disabled={disabled} />
   }
 }
 

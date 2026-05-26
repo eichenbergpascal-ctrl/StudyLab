@@ -76,6 +76,21 @@ Wähle den Fragetyp passend zum Inhalt. Mischung verwenden.
 - Musterlösung: **Bullet Points** (3–5 Stück), jeder mit **fettem Schlüsselbegriff** + kurze Erklärung. Kein Fließtext, keine Aufsätze.
 - Key Points: 3–4 Stichpunkte, je max 10 Wörter
 
+### Wahr/Falsch (`true_false`)
+- Aussagen müssen plausibel klingen — keine offensichtlich falschen Statements
+- Mischung aus wahren und falschen Aussagen
+
+### Reihenfolge (`ordering`)
+- 3–6 Items
+- Nur verwenden wenn eine klare, eindeutige Reihenfolge existiert (Prozessschritte, chronologische Abfolge, Rangfolgen)
+- Items in korrekter Reihenfolge angeben — correct_order ist immer [0, 1, 2, ...]
+
+### Rechenaufgabe (`calculation`)
+- Nur verwenden wenn der Themenabschnitt Zahlen, Formeln oder Berechnungsbeispiele enthält
+- Aufgabe muss mit den gegebenen Informationen lösbar sein
+- solution_steps als kurze Schritte (je max 15 Wörter)
+- formula_hint ist optional: relevante Formel als Hilfestellung
+
 **Für alle Typen:**
 - Prüfungsniveau Universität
 - Erklärungen knapp: max 2 Sätze
@@ -136,10 +151,37 @@ Nur valides JSON, kein Text davor oder danach.
         "sample_answer": "- **Begriff A** → Erklärung in einem Satz\n- **Begriff B** → Erklärung in einem Satz\n- **Begriff C** → Erklärung in einem Satz",
         "key_points": ["<max 10 Wörter>", "<max 10 Wörter>"]
       }
+    },
+    {
+      "question_type": "true_false",
+      "question_data": { "statement": "<Aussage, 1–2 Sätze>" },
+      "answer_data": { "is_true": true, "explanation": "<1–2 Sätze>" }
+    },
+    {
+      "question_type": "ordering",
+      "question_data": {
+        "instruction": "<Was soll sortiert werden? 1 Satz>",
+        "items": ["<Item in korrekter Reihenfolge>", "<Item>", "<Item>"]
+      },
+      "answer_data": { "correct_order": [0, 1, 2], "explanation": "<1–2 Sätze>" }
+    },
+    {
+      "question_type": "calculation",
+      "question_data": {
+        "question": "<Rechenaufgabe, 1–3 Sätze>",
+        "formula_hint": "<optional: relevante Formel>"
+      },
+      "answer_data": {
+        "correct_value": 42.5,
+        "tolerance": 0.1,
+        "unit": "€",
+        "solution_steps": ["<Schritt 1>", "<Schritt 2>"],
+        "explanation": "<1–2 Sätze>"
+      }
     }
   ]
 }
 ```
 
-Wähle die 3–5 passendsten Aufgabentypen für den Inhalt. Nicht alle 4 Typen erzwingen.
+Wähle die 3–5 passendsten Aufgabentypen für den Inhalt. Nicht alle 7 Typen erzwingen.
 ```

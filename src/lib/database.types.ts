@@ -368,7 +368,7 @@ export type Database = {
         | "generating"
         | "completed"
         | "failed"
-      question_type: "mc" | "fill_blank" | "matching" | "free_text"
+      question_type: "mc" | "fill_blank" | "matching" | "free_text" | "true_false" | "ordering" | "calculation"
       session_type: "flashcard" | "exam" | "error_session"
     }
     CompositeTypes: {
@@ -505,7 +505,7 @@ export const Constants = {
         "completed",
         "failed",
       ],
-      question_type: ["mc", "fill_blank", "matching", "free_text"],
+      question_type: ["mc", "fill_blank", "matching", "free_text", "true_false", "ordering", "calculation"],
       session_type: ["flashcard", "exam", "error_session"],
     },
   },

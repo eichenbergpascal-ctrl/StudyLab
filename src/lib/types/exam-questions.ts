@@ -45,6 +45,39 @@ export interface FreeTextAnswerData {
   key_points: string[]
 }
 
+export interface TrueFalseQuestionData {
+  statement: string
+}
+
+export interface TrueFalseAnswerData {
+  is_true: boolean
+  explanation: string
+}
+
+export interface OrderingQuestionData {
+  instruction: string
+  items: string[]
+}
+
+// items are stored in correct order; correct_order is always [0,1,2,...]
+export interface OrderingAnswerData {
+  correct_order: number[]
+  explanation: string
+}
+
+export interface CalculationQuestionData {
+  question: string
+  formula_hint?: string
+}
+
+export interface CalculationAnswerData {
+  correct_value: number
+  tolerance?: number
+  unit?: string
+  solution_steps: string[]
+  explanation: string
+}
+
 // ---- Discriminated union for a fully-typed question ------------------------
 
 export type TypedExamQuestion =
@@ -75,6 +108,27 @@ export type TypedExamQuestion =
       question_type: "free_text"
       question_data: FreeTextQuestionData
       answer_data: FreeTextAnswerData
+    }
+  | {
+      id: string
+      section_id: string
+      question_type: "true_false"
+      question_data: TrueFalseQuestionData
+      answer_data: TrueFalseAnswerData
+    }
+  | {
+      id: string
+      section_id: string
+      question_type: "ordering"
+      question_data: OrderingQuestionData
+      answer_data: OrderingAnswerData
+    }
+  | {
+      id: string
+      section_id: string
+      question_type: "calculation"
+      question_data: CalculationQuestionData
+      answer_data: CalculationAnswerData
     }
 
 // ---- Session answer format --------------------------------------------------
@@ -118,6 +172,27 @@ export function parseExamQuestion(row: ExamQuestionRow): TypedExamQuestion {
         question_type: "free_text",
         question_data: row.question_data as unknown as FreeTextQuestionData,
         answer_data: row.answer_data as unknown as FreeTextAnswerData,
+      }
+    case "true_false":
+      return {
+        ...base,
+        question_type: "true_false",
+        question_data: row.question_data as unknown as TrueFalseQuestionData,
+        answer_data: row.answer_data as unknown as TrueFalseAnswerData,
+      }
+    case "ordering":
+      return {
+        ...base,
+        question_type: "ordering",
+        question_data: row.question_data as unknown as OrderingQuestionData,
+        answer_data: row.answer_data as unknown as OrderingAnswerData,
+      }
+    case "calculation":
+      return {
+        ...base,
+        question_type: "calculation",
+        question_data: row.question_data as unknown as CalculationQuestionData,
+        answer_data: row.answer_data as unknown as CalculationAnswerData,
       }
   }
 }
