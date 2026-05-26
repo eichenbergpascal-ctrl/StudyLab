@@ -1,9 +1,14 @@
+import type { Metadata } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { FileText, Loader2, Plus } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+
+export const metadata: Metadata = {
+  title: "Dashboard",
+}
 
 function formatDate(dateStr: string): string {
   return new Intl.DateTimeFormat("de-DE", {
@@ -217,72 +222,79 @@ export default async function DashboardPage() {
   const allFlashcardIds = [...examFlashcardIds.values()].flat()
   const allExamQuestionIds = [...examExamQuestionIds.values()].flat()
 
-  // Attempts: latest per item (for worked count and last activity)
-  const flashcardAttemptMap = new Map<string, string>() // id → created_at
-  if (allFlashcardIds.length > 0) {
-    const { data: fcAttempts } = await supabase
-      .from("attempts")
-      .select("flashcard_id, created_at")
-      .in("flashcard_id", allFlashcardIds)
+  // Run all remaining queries in parallel
+  const [
+    { data: fcAttempts },
+    { data: eqAttempts },
+    { data: fcErrors },
+    { data: eqErrors },
+    { data: openSessionsRaw },
+  ] = await Promise.all([
+    allFlashcardIds.length > 0
+      ? supabase
+          .from("attempts")
+          .select("flashcard_id, created_at")
+          .in("flashcard_id", allFlashcardIds)
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: null }),
+    allExamQuestionIds.length > 0
+      ? supabase
+          .from("attempts")
+          .select("exam_question_id, created_at")
+          .in("exam_question_id", allExamQuestionIds)
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: null }),
+    allFlashcardIds.length > 0
+      ? supabase
+          .from("error_pool")
+          .select("flashcard_id")
+          .eq("user_id", user.id)
+          .in("flashcard_id", allFlashcardIds)
+      : Promise.resolve({ data: null }),
+    allExamQuestionIds.length > 0
+      ? supabase
+          .from("error_pool")
+          .select("exam_question_id")
+          .eq("user_id", user.id)
+          .in("exam_question_id", allExamQuestionIds)
+      : Promise.resolve({ data: null }),
+    supabase
+      .from("exam_sessions")
+      .select("id, exam_id, created_at")
+      .in("exam_id", examIds)
       .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-    for (const a of fcAttempts ?? []) {
-      if (a.flashcard_id && !flashcardAttemptMap.has(a.flashcard_id)) {
-        flashcardAttemptMap.set(a.flashcard_id, a.created_at)
-      }
+      .eq("status", "in_progress")
+      .order("created_at", { ascending: false }),
+  ])
+
+  // Build lookup maps from query results
+  const flashcardAttemptMap = new Map<string, string>()
+  for (const a of fcAttempts ?? []) {
+    if (a.flashcard_id && !flashcardAttemptMap.has(a.flashcard_id)) {
+      flashcardAttemptMap.set(a.flashcard_id, a.created_at)
     }
   }
 
   const examQuestionAttemptMap = new Map<string, string>()
-  if (allExamQuestionIds.length > 0) {
-    const { data: eqAttempts } = await supabase
-      .from("attempts")
-      .select("exam_question_id, created_at")
-      .in("exam_question_id", allExamQuestionIds)
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-    for (const a of eqAttempts ?? []) {
-      if (a.exam_question_id && !examQuestionAttemptMap.has(a.exam_question_id)) {
-        examQuestionAttemptMap.set(a.exam_question_id, a.created_at)
-      }
+  for (const a of eqAttempts ?? []) {
+    if (a.exam_question_id && !examQuestionAttemptMap.has(a.exam_question_id)) {
+      examQuestionAttemptMap.set(a.exam_question_id, a.created_at)
     }
   }
 
-  // Error pool
   const flashcardErrorSet = new Set<string>()
-  if (allFlashcardIds.length > 0) {
-    const { data: fcErrors } = await supabase
-      .from("error_pool")
-      .select("flashcard_id")
-      .eq("user_id", user.id)
-      .in("flashcard_id", allFlashcardIds)
-    for (const e of fcErrors ?? []) {
-      if (e.flashcard_id) flashcardErrorSet.add(e.flashcard_id)
-    }
+  for (const e of fcErrors ?? []) {
+    if (e.flashcard_id) flashcardErrorSet.add(e.flashcard_id)
   }
 
   const examQuestionErrorSet = new Set<string>()
-  if (allExamQuestionIds.length > 0) {
-    const { data: eqErrors } = await supabase
-      .from("error_pool")
-      .select("exam_question_id")
-      .eq("user_id", user.id)
-      .in("exam_question_id", allExamQuestionIds)
-    for (const e of eqErrors ?? []) {
-      if (e.exam_question_id) examQuestionErrorSet.add(e.exam_question_id)
-    }
+  for (const e of eqErrors ?? []) {
+    if (e.exam_question_id) examQuestionErrorSet.add(e.exam_question_id)
   }
 
-  // In-progress exam sessions (most recent per exam)
-  const { data: openSessionsRaw } = await supabase
-    .from("exam_sessions")
-    .select("id, exam_id, created_at")
-    .in("exam_id", examIds)
-    .eq("user_id", user.id)
-    .eq("status", "in_progress")
-    .order("created_at", { ascending: false })
-
-  const examSessionMap = new Map<string, string>() // examId → sessionId
+  const examSessionMap = new Map<string, string>()
   for (const s of openSessionsRaw ?? []) {
     if (!examSessionMap.has(s.exam_id)) {
       examSessionMap.set(s.exam_id, s.id)
@@ -369,7 +381,7 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {displayExams.map((exam) => (
             <ExamCard key={exam.id} exam={exam} />
           ))}

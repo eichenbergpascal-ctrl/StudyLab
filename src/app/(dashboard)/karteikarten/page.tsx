@@ -1,8 +1,13 @@
+import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { Layers, ChevronRight } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { buttonVariants } from "@/components/ui/button"
+
+export const metadata: Metadata = {
+  title: "Karteikarten",
+}
 
 export default async function KarteikartenPage() {
   const supabase = await createClient()

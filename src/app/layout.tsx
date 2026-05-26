@@ -25,8 +25,8 @@ const fontMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "StudyLab",
-  description: "Klausurvorbereitung mit KI — Karteikarten, Probeklausuren und Fehler-Tracking.",
+  title: { template: "%s | StudyLab", default: "StudyLab" },
+  description: "Dein persönlicher Lernbereich für die Klausurvorbereitung.",
 }
 
 export default function RootLayout({

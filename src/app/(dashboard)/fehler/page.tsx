@@ -1,7 +1,12 @@
+import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { FehlerPoolContent } from "./_components/FehlerPoolContent"
 import type { FlashcardError, ExamQuestionError } from "./_components/FehlerPoolContent"
+
+export const metadata: Metadata = {
+  title: "Fehlerpool",
+}
 
 type FlashcardWithContext = {
   id: string

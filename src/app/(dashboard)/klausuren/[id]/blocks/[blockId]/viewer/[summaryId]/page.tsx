@@ -74,35 +74,36 @@ export default async function SummaryViewerPage({
       s.exam_questions.map((eq) => eq.id),
     )
 
-    const flashcardLastAttempt = new Map<string, boolean>()
-    if (allFlashcardIds.length > 0) {
-      const { data: attempts } = await supabase
-        .from("attempts")
-        .select("flashcard_id, is_correct, created_at")
-        .in("flashcard_id", allFlashcardIds)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
+    const [{ data: fcAttempts }, { data: eqAttempts }] = await Promise.all([
+      allFlashcardIds.length > 0
+        ? supabase
+            .from("attempts")
+            .select("flashcard_id, is_correct, created_at")
+            .in("flashcard_id", allFlashcardIds)
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+        : Promise.resolve({ data: null }),
+      allExamQuestionIds.length > 0
+        ? supabase
+            .from("attempts")
+            .select("exam_question_id, is_correct, created_at")
+            .in("exam_question_id", allExamQuestionIds)
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+        : Promise.resolve({ data: null }),
+    ])
 
-      for (const a of attempts ?? []) {
-        if (a.flashcard_id && !flashcardLastAttempt.has(a.flashcard_id)) {
-          flashcardLastAttempt.set(a.flashcard_id, a.is_correct)
-        }
+    const flashcardLastAttempt = new Map<string, boolean>()
+    for (const a of fcAttempts ?? []) {
+      if (a.flashcard_id && !flashcardLastAttempt.has(a.flashcard_id)) {
+        flashcardLastAttempt.set(a.flashcard_id, a.is_correct)
       }
     }
 
     const examQuestionLastAttempt = new Map<string, boolean>()
-    if (allExamQuestionIds.length > 0) {
-      const { data: attempts } = await supabase
-        .from("attempts")
-        .select("exam_question_id, is_correct, created_at")
-        .in("exam_question_id", allExamQuestionIds)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-
-      for (const a of attempts ?? []) {
-        if (a.exam_question_id && !examQuestionLastAttempt.has(a.exam_question_id)) {
-          examQuestionLastAttempt.set(a.exam_question_id, a.is_correct)
-        }
+    for (const a of eqAttempts ?? []) {
+      if (a.exam_question_id && !examQuestionLastAttempt.has(a.exam_question_id)) {
+        examQuestionLastAttempt.set(a.exam_question_id, a.is_correct)
       }
     }
 

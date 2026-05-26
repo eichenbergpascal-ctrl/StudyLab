@@ -1,8 +1,13 @@
+import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { CheckSquare, ChevronRight, Clock } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { buttonVariants } from "@/components/ui/button"
+
+export const metadata: Metadata = {
+  title: "Probeklausuren",
+}
 
 export default async function ProbeklausurenPage() {
   const supabase = await createClient()

@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
@@ -15,6 +16,26 @@ type BlockStats = {
   examQuestionsCorrect: number
   examQuestionsIncorrect: number
   offeneFehler: number
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ examId: string }>
+}): Promise<Metadata> {
+  const { examId } = await params
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { title: "Lernfortschritt" }
+  const { data: exam } = await supabase
+    .from("exams")
+    .select("name")
+    .eq("id", examId)
+    .eq("user_id", user.id)
+    .single()
+  return { title: exam ? `${exam.name} – Fortschritt` : "Lernfortschritt" }
 }
 
 export default async function FortschrittDetailPage({
@@ -70,36 +91,37 @@ export default async function FortschrittDetailPage({
   const allFlashcardIds = blockEntries.flatMap((b) => b.flashcardIds)
   const allExamQuestionIds = blockEntries.flatMap((b) => b.examQuestionIds)
 
-  // Map: itemId → is_correct of the latest attempt
-  const flashcardLastAttempt = new Map<string, boolean>()
-  if (allFlashcardIds.length > 0) {
-    const { data: attempts } = await supabase
-      .from("attempts")
-      .select("flashcard_id, is_correct, created_at")
-      .in("flashcard_id", allFlashcardIds)
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
+  // Run both attempt queries in parallel
+  const [{ data: fcAttempts }, { data: eqAttempts }] = await Promise.all([
+    allFlashcardIds.length > 0
+      ? supabase
+          .from("attempts")
+          .select("flashcard_id, is_correct, created_at")
+          .in("flashcard_id", allFlashcardIds)
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: null }),
+    allExamQuestionIds.length > 0
+      ? supabase
+          .from("attempts")
+          .select("exam_question_id, is_correct, created_at")
+          .in("exam_question_id", allExamQuestionIds)
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+      : Promise.resolve({ data: null }),
+  ])
 
-    for (const a of attempts ?? []) {
-      if (a.flashcard_id && !flashcardLastAttempt.has(a.flashcard_id)) {
-        flashcardLastAttempt.set(a.flashcard_id, a.is_correct)
-      }
+  const flashcardLastAttempt = new Map<string, boolean>()
+  for (const a of fcAttempts ?? []) {
+    if (a.flashcard_id && !flashcardLastAttempt.has(a.flashcard_id)) {
+      flashcardLastAttempt.set(a.flashcard_id, a.is_correct)
     }
   }
 
   const examQuestionLastAttempt = new Map<string, boolean>()
-  if (allExamQuestionIds.length > 0) {
-    const { data: attempts } = await supabase
-      .from("attempts")
-      .select("exam_question_id, is_correct, created_at")
-      .in("exam_question_id", allExamQuestionIds)
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-
-    for (const a of attempts ?? []) {
-      if (a.exam_question_id && !examQuestionLastAttempt.has(a.exam_question_id)) {
-        examQuestionLastAttempt.set(a.exam_question_id, a.is_correct)
-      }
+  for (const a of eqAttempts ?? []) {
+    if (a.exam_question_id && !examQuestionLastAttempt.has(a.exam_question_id)) {
+      examQuestionLastAttempt.set(a.exam_question_id, a.is_correct)
     }
   }
 

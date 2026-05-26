@@ -1,7 +1,12 @@
+import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { TrendingUp, Calendar, ChevronRight } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
+
+export const metadata: Metadata = {
+  title: "Lernfortschritt",
+}
 
 function formatDate(dateStr: string): string {
   return new Intl.DateTimeFormat("de-DE", {

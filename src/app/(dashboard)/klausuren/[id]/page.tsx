@@ -1,3 +1,4 @@
+import type { Metadata } from "next"
 import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Layers, ChevronRight, CheckSquare, TrendingUp } from "lucide-react"
@@ -21,6 +22,26 @@ function formatShortDate(dateStr: string): string {
     year: "numeric",
     timeZone: "UTC",
   }).format(new Date(dateStr))
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>
+}): Promise<Metadata> {
+  const { id } = await params
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { title: "Klausur" }
+  const { data: exam } = await supabase
+    .from("exams")
+    .select("name")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .single()
+  return { title: exam?.name ?? "Klausur" }
 }
 
 export default async function ExamDetailPage({

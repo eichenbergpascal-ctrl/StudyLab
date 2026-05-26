@@ -1,8 +1,13 @@
+import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { BookOpen } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
 import { ExamCard } from "./_components/ExamCard"
 import { CreateExamButton } from "./_components/CreateExamButton"
+
+export const metadata: Metadata = {
+  title: "Klausuren",
+}
 
 export default async function KlausurenPage() {
   const supabase = await createClient()
