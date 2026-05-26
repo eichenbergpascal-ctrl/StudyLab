@@ -33,7 +33,7 @@ export default async function FlashcardsPage({
       `
       id, name, weight_percent,
       summaries (
-        id,
+        id, filename, created_at,
         sections (
           id, title, sort_order,
           flashcards ( id, question, answer, is_user_created )
@@ -92,34 +92,42 @@ export default async function FlashcardsPage({
 
   // Build structured block data for the accordion component
   const blocks = (blocksRaw ?? []).map((block) => {
-    const sections = block.summaries
-      .flatMap((summary) => summary.sections)
-      .sort((a, b) => a.sort_order - b.sort_order)
-      .map((s) => ({
-        id: s.id,
-        title: s.title,
-        sort_order: s.sort_order,
-        flashcardCount: s.flashcards.length,
-        aiFlashcardCount: s.flashcards.filter(
-          (f: { is_user_created: boolean }) => !f.is_user_created,
-        ).length,
-        lastStudied: latestAttemptBySectionId.get(s.id) ?? null,
-        flashcards: s.flashcards.map(
-          (f: { id: string; question: string; answer: string; is_user_created: boolean }) => ({
-            id: f.id,
-            question: f.question,
-            answer: f.answer,
-            is_user_created: f.is_user_created,
-          }),
-        ),
+    const summaries = [...block.summaries]
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      .map((summary) => ({
+        id: summary.id,
+        filename: summary.filename,
+        sections: [...summary.sections]
+          .sort((a, b) => a.sort_order - b.sort_order)
+          .map((s) => ({
+            id: s.id,
+            title: s.title,
+            sort_order: s.sort_order,
+            flashcardCount: s.flashcards.length,
+            aiFlashcardCount: s.flashcards.filter(
+              (f: { is_user_created: boolean }) => !f.is_user_created,
+            ).length,
+            lastStudied: latestAttemptBySectionId.get(s.id) ?? null,
+            flashcards: s.flashcards.map(
+              (f: { id: string; question: string; answer: string; is_user_created: boolean }) => ({
+                id: f.id,
+                question: f.question,
+                answer: f.answer,
+                is_user_created: f.is_user_created,
+              }),
+            ),
+          })),
       }))
-    const totalCount = sections.reduce((sum, s) => sum + s.flashcardCount, 0)
-    return { id: block.id, name: block.name, weight_percent: block.weight_percent, sections, totalCount }
+    const totalCount = summaries.reduce(
+      (sum, sg) => sum + sg.sections.reduce((s2, s) => s2 + s.flashcardCount, 0),
+      0,
+    )
+    return { id: block.id, name: block.name, weight_percent: block.weight_percent, summaries, totalCount }
   })
 
   const totalCount = blocks.reduce((sum, b) => sum + b.totalCount, 0)
-  // Show all blocks that have at least one section — even if sections have 0 cards
-  const blocksWithSections = blocks.filter((b) => b.sections.length > 0)
+  // Show all blocks that have at least one summary with sections
+  const blocksWithSections = blocks.filter((b) => b.summaries.some((sg) => sg.sections.length > 0))
 
   return (
     <div className="px-8 py-6">

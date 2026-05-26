@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
+import { toast } from "sonner"
 import { AlertCircle, ChevronRight } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -10,7 +11,9 @@ export type FlashcardError = {
   flashcard_id: string
   question: string
   section_title: string
+  block_id: string
   block_name: string
+  exam_id: string
   exam_name: string
   created_at: string
 }
@@ -20,9 +23,34 @@ export type ExamQuestionError = {
   question_type: string
   question_preview: string
   section_title: string
+  block_id: string
   block_name: string
+  exam_id: string
   exam_name: string
   created_at: string
+}
+
+type BlockGroup<T> = { block_id: string; block_name: string; items: T[] }
+type ExamGroup<T> = { exam_id: string; exam_name: string; total: number; blocks: BlockGroup<T>[] }
+
+function groupErrors<T extends { exam_id: string; exam_name: string; block_id: string; block_name: string }>(
+  items: T[]
+): ExamGroup<T>[] {
+  const map = new Map<string, ExamGroup<T>>()
+  for (const item of items) {
+    if (!map.has(item.exam_id)) {
+      map.set(item.exam_id, { exam_id: item.exam_id, exam_name: item.exam_name, total: 0, blocks: [] })
+    }
+    const eg = map.get(item.exam_id)!
+    let bg = eg.blocks.find(b => b.block_id === item.block_id)
+    if (!bg) {
+      bg = { block_id: item.block_id, block_name: item.block_name, items: [] }
+      eg.blocks.push(bg)
+    }
+    bg.items.push(item)
+    eg.total++
+  }
+  return Array.from(map.values())
 }
 
 function formatDate(dateStr: string): string {
@@ -63,11 +91,22 @@ function EmptyState({ label }: { label: string }) {
 export function FehlerPoolContent({
   flashcardErrors,
   examErrors,
+  emptyParam,
 }: {
   flashcardErrors: FlashcardError[]
   examErrors: ExamQuestionError[]
+  emptyParam?: string
 }) {
   const [tab, setTab] = useState<"karteikarten" | "klausuren">("karteikarten")
+
+  useEffect(() => {
+    if (!emptyParam) return
+    const message =
+      emptyParam === "block"
+        ? "Keine offenen Fehler für diesen Block."
+        : "Keine offenen Fehler für diese Klausur."
+    toast.info(message, { duration: 5000 })
+  }, [emptyParam])
 
   return (
     <div className="px-8 py-6">
@@ -113,105 +152,151 @@ export function FehlerPoolContent({
 
         {/* Karteikarten Tab */}
         {tab === "karteikarten" && (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-6">
             {flashcardErrors.length === 0 ? (
               <EmptyState label="Karteikarten" />
             ) : (
-              <>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    {flashcardErrors.length} {flashcardErrors.length === 1 ? "Karte" : "Karten"} im Pool
-                  </p>
-                  <Link
-                    href="/fehler/karteikarten/session"
-                    className={buttonVariants({ size: "sm" })}
-                  >
-                    Fehler-Session starten
-                  </Link>
-                </div>
-
-                <div className="rounded-xl border border-border bg-card overflow-hidden">
-                  {flashcardErrors.map((item, i) => (
-                    <div
-                      key={item.flashcard_id}
-                      className={cn(
-                        "flex items-start justify-between gap-4 px-5 py-4",
-                        i < flashcardErrors.length - 1 && "border-b border-border"
-                      )}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="mb-1 line-clamp-2 text-sm text-foreground">
-                          {item.question}
-                        </p>
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <span>{item.exam_name}</span>
-                          <ChevronRight className="size-3 shrink-0" strokeWidth={2} />
-                          <span>{item.block_name}</span>
-                          <ChevronRight className="size-3 shrink-0" strokeWidth={2} />
-                          <span>{item.section_title}</span>
-                        </div>
-                      </div>
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        {item.created_at ? formatDate(item.created_at) : "—"}
-                      </span>
+              groupErrors(flashcardErrors).map((examGroup) => (
+                <div key={examGroup.exam_id} className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground">{examGroup.exam_name}</h2>
+                      <p className="text-xs text-muted-foreground">
+                        {examGroup.total} {examGroup.total === 1 ? "Karte" : "Karten"}
+                      </p>
                     </div>
-                  ))}
+                    <Link
+                      href={`/fehler/karteikarten/session?examId=${examGroup.exam_id}`}
+                      className={buttonVariants({ size: "sm" })}
+                    >
+                      Klausur üben
+                    </Link>
+                  </div>
+
+                  <div className="rounded-xl border border-border bg-card overflow-hidden">
+                    {examGroup.blocks.map((blockGroup, blockIdx) => (
+                      <div key={blockGroup.block_id}>
+                        <div
+                          className={cn(
+                            "flex items-center justify-between px-5 py-3 bg-slate-50",
+                            blockIdx > 0 && "border-t border-border"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-foreground">{blockGroup.block_name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              ({blockGroup.items.length} {blockGroup.items.length === 1 ? "Karte" : "Karten"})
+                            </span>
+                          </div>
+                          <Link
+                            href={`/fehler/karteikarten/session?blockId=${blockGroup.block_id}`}
+                            className={buttonVariants({ size: "sm", variant: "outline" })}
+                          >
+                            Block üben
+                          </Link>
+                        </div>
+                        {blockGroup.items.map((item) => (
+                          <div
+                            key={item.flashcard_id}
+                            className="flex items-start justify-between gap-4 border-t border-border px-5 py-4"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="mb-1 line-clamp-2 text-sm text-foreground">
+                                {item.question}
+                              </p>
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <span>{item.block_name}</span>
+                                <ChevronRight className="size-3 shrink-0" strokeWidth={2} />
+                                <span>{item.section_title}</span>
+                              </div>
+                            </div>
+                            <span className="shrink-0 text-xs text-muted-foreground">
+                              {item.created_at ? formatDate(item.created_at) : "—"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </>
+              ))
             )}
           </div>
         )}
 
         {/* Klausuraufgaben Tab */}
         {tab === "klausuren" && (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-6">
             {examErrors.length === 0 ? (
               <EmptyState label="Klausuraufgaben" />
             ) : (
-              <>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">
-                    {examErrors.length} {examErrors.length === 1 ? "Aufgabe" : "Aufgaben"} im Pool
-                  </p>
-                  <Link
-                    href="/fehler/klausuren/session"
-                    className={buttonVariants({ size: "sm" })}
-                  >
-                    Fehler-Session starten
-                  </Link>
-                </div>
-
-                <div className="rounded-xl border border-border bg-card overflow-hidden">
-                  {examErrors.map((item, i) => (
-                    <div
-                      key={item.exam_question_id}
-                      className={cn(
-                        "flex items-start justify-between gap-4 px-5 py-4",
-                        i < examErrors.length - 1 && "border-b border-border"
-                      )}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="mb-1 flex items-center gap-2">
-                          <QuestionTypeLabel type={item.question_type} />
-                          <p className="line-clamp-1 text-sm text-foreground">
-                            {item.question_preview}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <span>{item.exam_name}</span>
-                          <ChevronRight className="size-3 shrink-0" strokeWidth={2} />
-                          <span>{item.block_name}</span>
-                          <ChevronRight className="size-3 shrink-0" strokeWidth={2} />
-                          <span>{item.section_title}</span>
-                        </div>
-                      </div>
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        {item.created_at ? formatDate(item.created_at) : "—"}
-                      </span>
+              groupErrors(examErrors).map((examGroup) => (
+                <div key={examGroup.exam_id} className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-base font-semibold text-foreground">{examGroup.exam_name}</h2>
+                      <p className="text-xs text-muted-foreground">
+                        {examGroup.total} {examGroup.total === 1 ? "Aufgabe" : "Aufgaben"}
+                      </p>
                     </div>
-                  ))}
+                    <Link
+                      href={`/fehler/klausuren/session?examId=${examGroup.exam_id}`}
+                      className={buttonVariants({ size: "sm" })}
+                    >
+                      Klausur üben
+                    </Link>
+                  </div>
+
+                  <div className="rounded-xl border border-border bg-card overflow-hidden">
+                    {examGroup.blocks.map((blockGroup, blockIdx) => (
+                      <div key={blockGroup.block_id}>
+                        <div
+                          className={cn(
+                            "flex items-center justify-between px-5 py-3 bg-slate-50",
+                            blockIdx > 0 && "border-t border-border"
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-foreground">{blockGroup.block_name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              ({blockGroup.items.length} {blockGroup.items.length === 1 ? "Aufgabe" : "Aufgaben"})
+                            </span>
+                          </div>
+                          <Link
+                            href={`/fehler/klausuren/session?blockId=${blockGroup.block_id}`}
+                            className={buttonVariants({ size: "sm", variant: "outline" })}
+                          >
+                            Block üben
+                          </Link>
+                        </div>
+                        {blockGroup.items.map((item) => (
+                          <div
+                            key={item.exam_question_id}
+                            className="flex items-start justify-between gap-4 border-t border-border px-5 py-4"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="mb-1 flex items-center gap-2">
+                                <QuestionTypeLabel type={item.question_type} />
+                                <p className="line-clamp-1 text-sm text-foreground">
+                                  {item.question_preview}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <span>{item.block_name}</span>
+                                <ChevronRight className="size-3 shrink-0" strokeWidth={2} />
+                                <span>{item.section_title}</span>
+                              </div>
+                            </div>
+                            <span className="shrink-0 text-xs text-muted-foreground">
+                              {item.created_at ? formatDate(item.created_at) : "—"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </>
+              ))
             )}
           </div>
         )}

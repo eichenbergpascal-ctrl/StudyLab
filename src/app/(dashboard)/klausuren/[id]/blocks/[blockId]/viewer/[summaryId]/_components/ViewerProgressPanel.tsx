@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight, Layers } from "lucide-react"
+import { ChevronLeft, ChevronRight, FileText, Layers } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { StartSectionButton } from "./StartSectionButton"
@@ -10,6 +10,7 @@ import { StartSectionButton } from "./StartSectionButton"
 export type SectionStat = {
   sectionId: string
   title: string
+  startPage: number | null
   flashcardsTotal: number
   flashcardsWorked: number
   flashcardsCorrect: number
@@ -111,6 +112,18 @@ export function ViewerProgressPanel({
               </div>
 
               <div className="flex flex-col gap-1.5">
+                {section.startPage != null && (
+                  <Link
+                    href={`?page=${section.startPage}`}
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "sm" }),
+                      "w-full justify-start gap-2",
+                    )}
+                  >
+                    <FileText className="size-3.5 shrink-0" strokeWidth={2} />
+                    Im PDF anzeigen
+                  </Link>
+                )}
                 {section.flashcardsTotal > 0 && (
                   <Link
                     href={`/klausuren/${examId}/flashcards/session?section=${section.sectionId}`}

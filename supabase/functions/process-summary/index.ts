@@ -37,6 +37,10 @@ Analysiere das PDF und extrahiere den Inhalt als strukturierte Themenabschnitte 
 - Klausurhinweise, organisatorische Infos (Sprechstunden, Termine)
 - Seitenzahlen, Header/Footer
 
+## Seitenzahlen
+
+Gib für jede Section die Seitenzahlen an, auf denen sie beginnt und endet (1-basiert, Integer). Nutze die physischen Seitenzahlen des PDFs, nicht aufgedruckte Seitennummern.
+
 ## Output-Format
 
 Antworte ausschließlich mit validem JSON — kein Text davor oder danach.
@@ -49,6 +53,8 @@ Antworte ausschließlich mit validem JSON — kein Text davor oder danach.
     {
       "title": "<Section-Titel>",
       "sort_order": 1,
+      "start_page": 1,
+      "end_page": 3,
       "content_markdown": "<Markdown-Inhalt der Section>"
     }
   ],
@@ -71,6 +77,8 @@ const CORS_HEADERS = {
 interface ParsedSection {
   title: string
   sort_order: number
+  start_page?: number
+  end_page?: number
   content_markdown: string
 }
 
@@ -302,6 +310,8 @@ async function processSummary(
     summary_id: summary.id,
     title: s.title,
     sort_order: s.sort_order,
+    start_page: s.start_page ?? null,
+    end_page: s.end_page ?? null,
     content_text: s.content_markdown,
   }))
 

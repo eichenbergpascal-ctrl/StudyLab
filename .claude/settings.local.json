@@ -45,7 +45,22 @@
       "Bash(mkdir -p \"C:/Users/pasca/Documents/Claude/Projects/Lernapp/src/app/\\(dashboard\\)/klausuren/[id]/flashcards/_components\")",
       "Bash(mkdir -p \"C:/Users/pasca/Documents/Claude/Projects/Lernapp/src/app/\\(dashboard\\)/klausuren/[id]/flashcards/session/_components\")",
       "Bash(pnpm test *)",
-      "Bash(pnpm exec *)"
+      "Bash(pnpm exec *)",
+      "Bash(npx next *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\pasca\\\\Documents\\\\Claude\\\\Projects\\\\Lernapp\" -Depth 2)",
+      "Bash(Select-Object FullName, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(npm install *)",
+      "Bash(node -e \"console.log\\(require\\('./node_modules/pdfjs-dist/package.json'\\).version\\)\")",
+      "Bash(npm cache *)",
+      "Bash(Get-Content *)",
+      "PowerShell($pkg = Get-Content \"C:\\\\Users\\\\pasca\\\\Documents\\\\Claude\\\\Projects\\\\Lernapp\\\\node_modules\\\\.pnpm\\\\@react-pdf-viewer+core@3.12.0\\\\node_modules\\\\@react-pdf-viewer\\\\core\\\\package.json\" | ConvertFrom-Json; $pkg.peerDependencies)",
+      "Bash(node -e \"const p = require\\('./node_modules/.pnpm/@react-pdf-viewer+core@3.12_9e9efa3c7634693da5319cf35c34f1cc/node_modules/@react-pdf-viewer/core/package.json'\\); console.log\\(JSON.stringify\\(p.peerDependencies, null, 2\\)\\)\")",
+      "Bash(pnpm approve-builds *)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(pnpm remove *)",
+      "Bash(node -e \"const r=require\\('./node_modules/react-pdf/package.json'\\); console.log\\('react-pdf deps:', JSON.stringify\\(r.dependencies['pdfjs-dist']\\)\\)\")",
+      "Bash(node -e \"const p=require\\('./node_modules/react-pdf/package.json'\\); console.log\\('react-pdf:', p.version\\)\")"
     ]
   }
 }

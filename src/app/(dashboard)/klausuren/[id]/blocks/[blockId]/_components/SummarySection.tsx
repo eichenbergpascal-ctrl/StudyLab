@@ -26,7 +26,7 @@ import {
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { Tables } from "@/lib/database.types"
-import { createSummaryRecord, deleteSummary, retrySummaryProcessing } from "../actions"
+import { completePdfReplace, createSummaryRecord, deleteSummary, replaceSummaryPdf, retrySummaryProcessing } from "../actions"
 
 type Summary = Tables<"summaries">
 
@@ -129,10 +129,14 @@ export function SummarySection({
 }) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const replaceInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [retryingId, setRetryingId] = useState<string | null>(null)
+  const [replacingId, setReplacingId] = useState<string | null>(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  const [confirmReplaceId, setConfirmReplaceId] = useState<string | null>(null)
+  const [pendingReplaceFile, setPendingReplaceFile] = useState<File | null>(null)
   const [summaries, setSummaries] = useState<Summary[]>(initialSummaries)
 
   // Merge server props into local state: preserve Realtime-updated fields for
@@ -254,6 +258,67 @@ export function SummarySection({
     }
   }
 
+  function handleReplaceClick(summaryId: string) {
+    setConfirmReplaceId(summaryId)
+    setPendingReplaceFile(null)
+  }
+
+  function handleReplaceFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file) return
+
+    if (file.type !== "application/pdf") {
+      toast.error("Nur PDF-Dateien sind erlaubt.")
+      return
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      toast.error("Die Datei ist zu groß. Maximal 20 MB erlaubt.")
+      return
+    }
+    setPendingReplaceFile(file)
+  }
+
+  async function handleConfirmReplace() {
+    if (!confirmReplaceId || !pendingReplaceFile) return
+    const summaryId = confirmReplaceId
+    const file = pendingReplaceFile
+    setConfirmReplaceId(null)
+    setPendingReplaceFile(null)
+    setReplacingId(summaryId)
+
+    try {
+      const result = await replaceSummaryPdf(summaryId, examId, blockId)
+      if (result.error || !result.storagePath) {
+        toast.error(result.error ?? "Fehler beim Ersetzen.")
+        return
+      }
+
+      const supabase = createClient()
+      const { error: uploadError } = await supabase.storage
+        .from("summaries")
+        .upload(result.storagePath, file, {
+          contentType: "application/pdf",
+          upsert: true,
+        })
+
+      if (uploadError) {
+        toast.error("Upload fehlgeschlagen. Bitte erneut versuchen.")
+        return
+      }
+
+      const finalizeResult = await completePdfReplace(summaryId, examId, blockId)
+      if (finalizeResult.error) {
+        toast.error(finalizeResult.error)
+        return
+      }
+
+      toast.success("PDF wurde ersetzt.")
+    } finally {
+      setReplacingId(null)
+    }
+  }
+
   async function handleConfirmDelete() {
     if (!confirmDeleteId) return
     const idToDelete = confirmDeleteId
@@ -301,6 +366,13 @@ export function SummarySection({
           onChange={handleFileChange}
           disabled={isUploading}
         />
+        <input
+          ref={replaceInputRef}
+          type="file"
+          accept="application/pdf"
+          className="sr-only"
+          onChange={handleReplaceFileSelect}
+        />
       </div>
 
       {summaries.length === 0 ? (
@@ -340,12 +412,29 @@ export function SummarySection({
                 summary={summary}
                 onRetry={handleRetry}
               />
+              {summary.processing_status === "completed" && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 shrink-0 text-muted-foreground hover:text-foreground"
+                  onClick={() => handleReplaceClick(summary.id)}
+                  disabled={replacingId === summary.id}
+                  aria-label="Bearbeitete Version hochladen"
+                  title="Bearbeitete Version hochladen"
+                >
+                  {replacingId === summary.id ? (
+                    <Loader2 className="size-4 animate-spin" strokeWidth={2} />
+                  ) : (
+                    <Upload className="size-4" strokeWidth={2} />
+                  )}
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
                 className="size-8 shrink-0 text-muted-foreground hover:text-destructive"
                 onClick={() => setConfirmDeleteId(summary.id)}
-                disabled={deletingId === summary.id || retryingId === summary.id}
+                disabled={deletingId === summary.id || retryingId === summary.id || replacingId === summary.id}
                 aria-label="Zusammenfassung löschen"
               >
                 {deletingId === summary.id ? (
@@ -358,6 +447,60 @@ export function SummarySection({
           ))}
         </div>
       )}
+
+      <Dialog
+        open={!!confirmReplaceId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setConfirmReplaceId(null)
+            setPendingReplaceFile(null)
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>PDF ersetzen</DialogTitle>
+            <DialogDescription>
+              Dies ersetzt nur die PDF-Datei. Deine Karteikarten und Aufgaben bleiben erhalten.
+              Stelle sicher, dass es sich um die bearbeitete Version der gleichen Zusammenfassung handelt.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            {pendingReplaceFile ? (
+              <p className="text-sm text-foreground">
+                Ausgewählt:{" "}
+                <span className="font-medium">{pendingReplaceFile.name}</span>
+              </p>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => replaceInputRef.current?.click()}
+              >
+                <Upload className="size-4" strokeWidth={2} />
+                PDF auswählen
+              </Button>
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setConfirmReplaceId(null)
+                setPendingReplaceFile(null)
+              }}
+            >
+              Abbrechen
+            </Button>
+            <Button
+              onClick={handleConfirmReplace}
+              disabled={!pendingReplaceFile}
+            >
+              Ersetzen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={!!confirmDeleteId}

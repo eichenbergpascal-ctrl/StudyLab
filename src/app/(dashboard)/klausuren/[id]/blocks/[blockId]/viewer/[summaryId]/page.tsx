@@ -2,14 +2,18 @@ import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
+import { PdfViewerClient } from "@/components/pdf-viewer/PdfViewerClient"
 import { ViewerProgressPanel, type SectionStat } from "./_components/ViewerProgressPanel"
 
 export default async function SummaryViewerPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string; blockId: string; summaryId: string }>
+  searchParams: Promise<{ page?: string }>
 }) {
   const { id: examId, blockId, summaryId } = await params
+  const { page: pageParam } = await searchParams
   const supabase = await createClient()
   const {
     data: { user },
@@ -50,12 +54,16 @@ export default async function SummaryViewerPage({
       .from("summaries")
       .createSignedUrl(summary.storage_path, 3600)
 
+  // Pass the 1-based ?page param directly — PdfViewer uses 1-based page numbers
+  const rawPage = pageParam ? parseInt(pageParam, 10) : NaN
+  const initialPage = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : undefined
+
   // Load section progress panel data only when processing is completed
   let sectionStats: SectionStat[] = []
   if (summary.processing_status === "completed") {
     const { data: sectionsRaw } = await supabase
       .from("sections")
-      .select("id, title, sort_order, flashcards(id), exam_questions(id)")
+      .select("id, title, sort_order, start_page, flashcards(id), exam_questions(id)")
       .eq("summary_id", summaryId)
       .order("sort_order", { ascending: true })
 
@@ -126,6 +134,7 @@ export default async function SummaryViewerPage({
       return {
         sectionId: s.id,
         title: s.title,
+        startPage: (s as unknown as { start_page: number | null }).start_page ?? null,
         flashcardsTotal: s.flashcards.length,
         flashcardsWorked,
         flashcardsCorrect,
@@ -167,10 +176,10 @@ export default async function SummaryViewerPage({
               </p>
             </div>
           ) : (
-            <iframe
-              src={signedUrlData.signedUrl}
-              title={summary.filename}
-              className="h-full w-full rounded-lg border border-border"
+            <PdfViewerClient
+              url={signedUrlData.signedUrl}
+              initialPage={initialPage}
+              className="h-full"
             />
           )}
         </div>

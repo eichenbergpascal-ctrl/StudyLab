@@ -10,8 +10,10 @@ type FlashcardWithContext = {
     title: string
     summaries: {
       blocks: {
+        id: string
         name: string
-        exams: { name: string }
+        exam_id: string
+        exams: { id: string; name: string }
       }
     }
   }
@@ -25,14 +27,21 @@ type ExamQuestionWithContext = {
     title: string
     summaries: {
       blocks: {
+        id: string
         name: string
-        exams: { name: string }
+        exam_id: string
+        exams: { id: string; name: string }
       }
     }
   }
 }
 
-export default async function FehlerPoolPage() {
+export default async function FehlerPoolPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ empty?: string }>
+}) {
+  const { empty } = await searchParams
   const supabase = await createClient()
   const {
     data: { user },
@@ -67,7 +76,7 @@ export default async function FehlerPoolPage() {
   if (flashcardIds.length > 0) {
     const { data: cards } = await supabase
       .from("flashcards")
-      .select("id, question, sections(title, summaries(blocks(name, exams(name))))")
+      .select("id, question, sections(title, summaries(blocks(id, name, exam_id, exams(id, name))))")
       .in("id", flashcardIds)
 
     const errorDateMap = new Map(
@@ -83,7 +92,9 @@ export default async function FehlerPoolPage() {
         flashcard_id: c.id,
         question: c.question,
         section_title: section?.title ?? "",
+        block_id: block?.id ?? "",
         block_name: block?.name ?? "",
+        exam_id: exam?.id ?? "",
         exam_name: exam?.name ?? "",
         created_at: errorDateMap.get(c.id) ?? "",
       }
@@ -94,7 +105,7 @@ export default async function FehlerPoolPage() {
   if (examQuestionIds.length > 0) {
     const { data: questions } = await supabase
       .from("exam_questions")
-      .select("id, question_type, question_data, sections(title, summaries(blocks(name, exams(name))))")
+      .select("id, question_type, question_data, sections(title, summaries(blocks(id, name, exam_id, exams(id, name))))")
       .in("id", examQuestionIds)
 
     const errorDateMap = new Map(
@@ -116,12 +127,20 @@ export default async function FehlerPoolPage() {
         question_type: eq.question_type,
         question_preview: questionPreview,
         section_title: section?.title ?? "",
+        block_id: block?.id ?? "",
         block_name: block?.name ?? "",
+        exam_id: exam?.id ?? "",
         exam_name: exam?.name ?? "",
         created_at: errorDateMap.get(eq.id) ?? "",
       }
     }).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }
 
-  return <FehlerPoolContent flashcardErrors={flashcardErrors} examErrors={examErrors} />
+  return (
+    <FehlerPoolContent
+      flashcardErrors={flashcardErrors}
+      examErrors={examErrors}
+      emptyParam={empty}
+    />
+  )
 }

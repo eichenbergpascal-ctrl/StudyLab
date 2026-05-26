@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import {
   ChevronDown,
   ChevronRight,
+  FileText,
   MoreHorizontal,
   Plus,
   Sparkles,
@@ -50,11 +51,17 @@ type Section = {
   flashcards: Flashcard[]
 }
 
+type SummaryGroup = {
+  id: string
+  filename: string
+  sections: Section[]
+}
+
 type Block = {
   id: string
   name: string
   weight_percent: number
-  sections: Section[]
+  summaries: SummaryGroup[]
   totalCount: number
 }
 
@@ -323,15 +330,23 @@ export function BlockAccordion({
         </div>
       </button>
 
-      {open && block.sections.length > 0 && (
+      {open && block.summaries.some((sg) => sg.sections.length > 0) && (
         <div className="border-t border-border">
-          {block.sections.map((section, i) => (
-            <div
-              key={section.id}
-              className={i < block.sections.length - 1 ? "border-b border-border/60" : ""}
-            >
-              <SectionRow section={section} examId={examId} />
-            </div>
+          {block.summaries.map((summary) => (
+            <React.Fragment key={summary.id}>
+              <div className="flex items-center gap-1.5 border-b border-border/60 px-4 py-2">
+                <FileText className="size-3 shrink-0 text-muted-foreground" strokeWidth={2} />
+                <span className="text-xs font-medium text-muted-foreground">{summary.filename}</span>
+              </div>
+              {summary.sections.map((section, i) => (
+                <div
+                  key={section.id}
+                  className={i < summary.sections.length - 1 ? "border-b border-border/60" : ""}
+                >
+                  <SectionRow section={section} examId={examId} />
+                </div>
+              ))}
+            </React.Fragment>
           ))}
         </div>
       )}

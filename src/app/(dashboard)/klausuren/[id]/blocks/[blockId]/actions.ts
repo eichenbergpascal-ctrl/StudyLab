@@ -165,3 +165,84 @@ export async function retrySummaryProcessing(
   revalidatePath(`/klausuren/${examId}/blocks/${blockId}`)
   return {}
 }
+
+export async function replaceSummaryPdf(
+  summaryId: string,
+  examId: string,
+  blockId: string
+): Promise<{ storagePath?: string; error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect("/login")
+
+  const { data: summary } = await supabase
+    .from("summaries")
+    .select("id, storage_path, processing_status, block_id")
+    .eq("id", summaryId)
+    .single()
+  if (!summary) return { error: "Zusammenfassung nicht gefunden." }
+  if (summary.processing_status !== "completed")
+    return { error: "Nur abgeschlossene Zusammenfassungen können ersetzt werden." }
+
+  const { data: block } = await supabase
+    .from("blocks")
+    .select("id, exam_id")
+    .eq("id", summary.block_id)
+    .single()
+  if (!block) return { error: "Block nicht gefunden." }
+
+  const { data: exam } = await supabase
+    .from("exams")
+    .select("id")
+    .eq("id", block.exam_id)
+    .eq("user_id", user.id)
+    .single()
+  if (!exam) return { error: "Keine Berechtigung." }
+
+  return { storagePath: summary.storage_path }
+}
+
+export async function completePdfReplace(
+  summaryId: string,
+  examId: string,
+  blockId: string
+): Promise<{ error?: string }> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) redirect("/login")
+
+  const { data: summary } = await supabase
+    .from("summaries")
+    .select("id, block_id")
+    .eq("id", summaryId)
+    .single()
+  if (!summary) return { error: "Zusammenfassung nicht gefunden." }
+
+  const { data: block } = await supabase
+    .from("blocks")
+    .select("id, exam_id")
+    .eq("id", summary.block_id)
+    .single()
+  if (!block) return { error: "Block nicht gefunden." }
+
+  const { data: exam } = await supabase
+    .from("exams")
+    .select("id")
+    .eq("id", block.exam_id)
+    .eq("user_id", user.id)
+    .single()
+  if (!exam) return { error: "Keine Berechtigung." }
+
+  const { error: updateError } = await supabase
+    .from("summaries")
+    .update({ updated_at: new Date().toISOString() })
+    .eq("id", summaryId)
+  if (updateError) return { error: "Aktualisierung fehlgeschlagen." }
+
+  revalidatePath(`/klausuren/${examId}/blocks/${blockId}`)
+  return {}
+}
