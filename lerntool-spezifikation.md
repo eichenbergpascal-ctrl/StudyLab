@@ -473,7 +473,101 @@ Das hochgeladene PDF wird als Original angezeigt — kein Markdown-Rendering, ke
 
 ---
 
-## 11. Features die bewusst ausgeschlossen wurden
+## 11. Lerngruppen (Community-Feature)
+
+### Konzept
+
+Kontrolliertes Teilen von Karteikarten und Klausuraufgaben innerhalb einer privaten Gruppe — kein öffentliches Free-for-all. Gedacht für Kommilitonen die denselben Kurs belegen.
+
+### Datenmodell (neu)
+
+```
+study_groups
+  id          uuid PK
+  name        text NOT NULL
+  owner_id    uuid FK auth.users
+  invite_code text UNIQUE NOT NULL  -- zufälliger kurzer String, z.B. "abc12"
+  created_at  timestamptz
+
+study_group_members
+  group_id    uuid FK study_groups
+  user_id     uuid FK auth.users
+  joined_at   timestamptz
+  PRIMARY KEY (group_id, user_id)
+
+contributions
+  id               uuid PK
+  group_id         uuid FK study_groups
+  contributor_id   uuid FK auth.users
+  source_type      text NOT NULL  -- 'flashcard' | 'exam_question'
+  source_id        uuid NOT NULL  -- ID der Flashcard oder Exam Question (kein DB FK wegen zwei Zieltabellen)
+  preview_question text NOT NULL  -- denormalisiert: Frage-Text für Preview ohne Join
+  created_at       timestamptz
+```
+
+**RLS:**
+- `study_groups`: Owner kann alles, Mitglieder können lesen
+- `study_group_members`: Mitglieder können eigene Membership lesen/löschen (Austritt), Owner kann alle sehen
+- `contributions`: Nur Mitglieder der jeweiligen Gruppe können lesen; Contributor kann eigene einstellen und löschen
+
+### User Flow
+
+**Gruppe erstellen & beitreten:**
+1. User erstellt eine Gruppe (Name eingeben) → Einladungslink mit `invite_code` wird generiert
+2. Kommilitone öffnet Link → tritt Gruppe bei (wird als Member eingetragen)
+3. Gruppe erscheint in der Sidebar unter "Lerngruppen"
+
+**Karten einreichen (Contributor):**
+1. User navigiert in eine Gruppe → "Karten einreichen"-Button
+2. Auswahl-UI zeigt eigene Flashcards und Exam Questions, sortiert nach `created_at DESC`, gruppiert nach Section/Block
+3. User wählt per Checkbox einzelne oder alle Karten einer Section aus
+4. Einreichen → Contribution-Rows werden in DB geschrieben (eine Row pro Karte)
+
+**Karten übernehmen (Empfänger):**
+
+Gruppen-Übersicht zeigt pro Contributor: "XY hat N Karten bereitgestellt" mit `created_at` des letzten Einreichens.
+
+Beim Übernehmen gibt es zwei Pfade:
+
+**Pfad 1 — Alles übernehmen (neue Klausur):**
+- User klickt "Als neue Klausur übernehmen"
+- Eingabe: Name für die neue Klausur
+- System erstellt automatisch: Klausur → Blöcke (aus Original) → Sections (aus Original) → kopiert alle Karten rein
+- Blockgewichtungen werden auf gleichmäßige Verteilung gesetzt (da unbekannt) — User kann danach manuell anpassen
+- Keine KI-Calls nötig, reine DB-Operationen
+
+**Pfad 2 — Selektiv übernehmen (in bestehende Klausur):**
+- User wählt einzelne Contributions aus (Checkbox + Preview)
+- Wählt Ziel-Klausur → Ziel-Block
+- Section-Matching: Suche nach Section mit identischem Titel (case-insensitive, trimmed) im Ziel-Block
+  - Match gefunden → Karte wird dort eingefügt
+  - Kein Match → neue Section mit Original-Titel wird angelegt
+- Karte wird als Kopie eingefügt (`is_user_created = false`, `source_contribution_id` gesetzt)
+
+### Kopier-Logik
+
+- Beim Kopieren wird eine echte neue Row in `flashcards` oder `exam_questions` angelegt — keine Referenz auf das Original
+- Feld `source_contribution_id` (nullable UUID) auf beiden Tabellen: zeigt auf die `contributions`-Row aus der die Karte stammt — Grundlage für spätere "Update verfügbar"-Logik
+- Bereits übernommene Contributions werden für den User markiert (damit er nicht doppelt übernimmt)
+
+### "Update verfügbar"-Logik (Basis)
+
+- Wenn ein Contributor neue Karten einreicht (`contributions.created_at` neuer als letztes Übernehmen des Users), erscheint ein Hinweis in der Gruppenansicht: "XY hat 3 neue Karten bereitgestellt seit deiner letzten Übernahme"
+- Kein automatisches Update — User entscheidet manuell
+
+### Was bewusst ausgeschlossen wurde
+
+| Feature | Grund |
+|---------|-------|
+| Öffentliche Community / Bibliothek | Cold-Start-Problem, Qualitätskontrolle, Urheberrecht |
+| Bidirektionale Sync | Merge-Konflikt-Problem; One-Way-Append reicht |
+| Moderation durch Owner | Jeder filtert selbst beim Übernehmen |
+| Automatisches Übernehmen | User hat volle Kontrolle |
+| Gruppen-Probeklausur (gemeinsam lösen) | Out of Scope V1 |
+
+---
+
+## 12. Features die bewusst ausgeschlossen wurden
 
 | Feature | Grund |
 |---------|-------|

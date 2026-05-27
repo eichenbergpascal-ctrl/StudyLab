@@ -12,6 +12,7 @@ import {
   Layers,
   PanelLeft,
   TrendingUp,
+  Users,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -24,6 +25,7 @@ const navItems = [
   { label: "Probeklausuren", href: "/probeklausuren", icon: CheckSquare },
   { label: "Fehler-Pool",    href: "/fehler",         icon: AlertCircle, badge: true },
   { label: "Fortschritt",    href: "/fortschritt",    icon: TrendingUp  },
+  { label: "Lerngruppen",    href: "/gruppen",        icon: Users       },
 ]
 
 export function Sidebar({ errorCount = 0 }: { errorCount?: number }) {

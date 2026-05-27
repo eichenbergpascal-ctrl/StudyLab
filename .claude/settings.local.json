@@ -60,7 +60,13 @@
       "Bash(node_modules/.bin/tsc --noEmit)",
       "Bash(pnpm remove *)",
       "Bash(node -e \"const r=require\\('./node_modules/react-pdf/package.json'\\); console.log\\('react-pdf deps:', JSON.stringify\\(r.dependencies['pdfjs-dist']\\)\\)\")",
-      "Bash(node -e \"const p=require\\('./node_modules/react-pdf/package.json'\\); console.log\\('react-pdf:', p.version\\)\")"
+      "Bash(node -e \"const p=require\\('./node_modules/react-pdf/package.json'\\); console.log\\('react-pdf:', p.version\\)\")",
+      "PowerShell(ls \"C:\\\\Users\\\\pasca\\\\Documents\\\\Claude\\\\Projects\\\\Lernapp\\\\src\\\\components\" -Recurse | Where-Object { -not $_.PSIsContainer } | Select-Object FullName)",
+      "PowerShell(ls \"C:\\\\Users\\\\pasca\\\\Documents\\\\Claude\\\\Projects\\\\Lernapp\\\\src\" -Recurse | Where-Object { -not $_.PSIsContainer } | Select-Object Name, DirectoryName | Sort-Object DirectoryName)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\pasca\\\\Documents\\\\Claude\\\\Projects\\\\Lernapp\\\\src\" -Recurse | Where-Object { $_.Extension -eq '.tsx' -or $_.Extension -eq '.ts' } | ForEach-Object { $_.FullName })",
+      "Bash(pnpm tsc *)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\pasca\\\\Documents\\\\Claude\\\\Projects\\\\Lernapp\\\\src\\\\app\\\\\\(dashboard\\)\\\\gruppen\\\\[id]\\\\einreichen\\\\_components\")",
+      "Bash(mkdir -p \"C:\\\\Users\\\\pasca\\\\Documents\\\\Claude\\\\Projects\\\\Lernapp\\\\src\\\\app\\\\\\(dashboard\\)\\\\gruppen\\\\[id]\\\\uebernehmen\\\\_components\")"
     ]
   }
 }

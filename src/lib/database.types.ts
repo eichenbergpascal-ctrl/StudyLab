@@ -91,6 +91,53 @@ export type Database = {
           },
         ]
       }
+      contributions: {
+        Row: {
+          block_name: string
+          card_data: Json
+          contributor_id: string
+          created_at: string
+          group_id: string
+          id: string
+          preview_question: string
+          section_title: string
+          source_id: string
+          source_type: string
+        }
+        Insert: {
+          block_name: string
+          card_data: Json
+          contributor_id: string
+          created_at?: string
+          group_id: string
+          id?: string
+          preview_question: string
+          section_title: string
+          source_id: string
+          source_type: string
+        }
+        Update: {
+          block_name?: string
+          card_data?: Json
+          contributor_id?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          preview_question?: string
+          section_title?: string
+          source_id?: string
+          source_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contributions_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "study_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exam_questions: {
         Row: {
           answer_data: Json
@@ -100,6 +147,7 @@ export type Database = {
           question_data: Json
           question_type: Database["public"]["Enums"]["question_type"]
           section_id: string
+          source_contribution_id: string | null
         }
         Insert: {
           answer_data: Json
@@ -109,6 +157,7 @@ export type Database = {
           question_data: Json
           question_type: Database["public"]["Enums"]["question_type"]
           section_id: string
+          source_contribution_id?: string | null
         }
         Update: {
           answer_data?: Json
@@ -118,6 +167,7 @@ export type Database = {
           question_data?: Json
           question_type?: Database["public"]["Enums"]["question_type"]
           section_id?: string
+          source_contribution_id?: string | null
         }
         Relationships: [
           {
@@ -218,6 +268,7 @@ export type Database = {
           is_user_created: boolean
           question: string
           section_id: string
+          source_contribution_id: string | null
         }
         Insert: {
           answer: string
@@ -226,6 +277,7 @@ export type Database = {
           is_user_created?: boolean
           question: string
           section_id: string
+          source_contribution_id?: string | null
         }
         Update: {
           answer?: string
@@ -234,6 +286,7 @@ export type Database = {
           is_user_created?: boolean
           question?: string
           section_id?: string
+          source_contribution_id?: string | null
         }
         Relationships: [
           {
@@ -279,6 +332,56 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      study_group_members: {
+        Row: {
+          group_id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "study_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_groups: {
+        Row: {
+          created_at: string
+          id: string
+          invite_code: string
+          name: string
+          owner_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          invite_code: string
+          name: string
+          owner_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          invite_code?: string
+          name?: string
+          owner_id?: string
+        }
+        Relationships: []
       }
       summaries: {
         Row: {
@@ -358,7 +461,22 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_group_id_by_invite_code: {
+        Args: { p_invite_code: string }
+        Returns: string | null
+      }
+      get_group_preview_by_invite_code: {
+        Args: { p_invite_code: string }
+        Returns: Array<{
+          id: string
+          name: string
+          member_count: number
+        }>
+      }
+      is_study_group_member: {
+        Args: { p_group_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       exam_session_status: "in_progress" | "completed" | "abandoned"

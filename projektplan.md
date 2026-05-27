@@ -353,6 +353,71 @@ Diese Dinge müssen VOR dem ersten Claude-Code-Prompt erledigt sein:
 
 ---
 
+## Etappe 9 — Lerngruppen
+
+**Ziel:** Nutzer können private Lerngruppen erstellen, Kommilitonen einladen und Karteikarten sowie Klausuraufgaben teilen. Empfänger übernehmen Karten selektiv oder als neue Klausur in ihren eigenen Arbeitsbereich.
+
+**Scope:**
+
+DB-Migration:
+- Neue Tabellen: `study_groups`, `study_group_members`, `contributions`
+- Neue Felder: `source_contribution_id` (uuid, nullable) auf `flashcards` und `exam_questions`
+- RLS-Policies für alle neuen Tabellen (Mitglieder können Gruppe und Contributions lesen, Owner kann alles)
+- Supabase Types neu generieren
+
+Gruppen-Feature:
+- Gruppe erstellen (Name) → `invite_code` wird generiert (random 6-Zeichen alphanumerisch)
+- Beitritt via Einladungslink (`/gruppen/beitreten/[invite_code]`)
+- Gruppen-Übersicht in Sidebar unter "Lerngruppen"
+- Gruppendetailseite: Mitglieder, Contributions pro Contributor ("XY hat N Karten bereitgestellt")
+- Gruppe verlassen (Mitglied) / Gruppe löschen (Owner, mit Bestätigung)
+
+Karten einreichen:
+- "Karten einreichen"-Button in Gruppendetailseite
+- Auswahl-UI: eigene Flashcards + Exam Questions, sortiert nach `created_at DESC`, gruppiert nach Section → Block
+- Checkbox-Selektion (Einzel- und Alle-einer-Section)
+- Preview der Frage (erste 100 Zeichen) in der Auswahlliste
+- Einreichen → Contribution-Rows in DB
+
+Karten übernehmen — Pfad 1 (neue Klausur):
+- "Als neue Klausur übernehmen"-Button bei Contributor-Block
+- Name für neue Klausur eingeben
+- System erstellt: Klausur → Blöcke → Sections → kopiert alle Karten (gleichmäßige Blockgewichtung als Default)
+- Bestätigung mit Zusammenfassung was erstellt wurde
+
+Karten übernehmen — Pfad 2 (selektiv):
+- Checkbox-Auswahl einzelner Contributions + Preview
+- Ziel-Klausur wählen (Dropdown aus eigenen Klausuren) → Ziel-Block wählen
+- Section-Matching: identischer Titel (case-insensitive, trimmed) → Match = einfügen, kein Match = neue Section anlegen
+- Bereits übernommene Contributions werden markiert (visuell ausgegraut + "bereits übernommen")
+
+"Update verfügbar"-Hinweis:
+- Wenn Contributor neue Contributions eingereicht hat seit letzter Übernahme des Users → Badge/Hinweis in Gruppenansicht
+
+**Nicht in Scope:**
+- Öffentliche Community / Bibliothek
+- Bidirektionale Sync
+- Gruppen-Probeklausur
+- Owner-Moderation von Contributions
+
+**Abhängigkeiten:** Etappe 8 abgeschlossen (stabiles, fertiges Produkt als Basis).
+
+**Test-Checkpoint:**
+- [ ] Gruppe erstellen → Einladungslink generiert
+- [ ] Zweiter User tritt via Link bei → erscheint als Mitglied
+- [ ] Karten einreichen → Contributions in DB (Supabase Dashboard prüfen)
+- [ ] Gruppendetailseite zeigt "XY hat N Karten bereitgestellt"
+- [ ] Pfad 1: Alle übernehmen → neue Klausur mit Blöcken, Sections und Karten erscheint im Dashboard
+- [ ] Pfad 2: Einzelne Karte übernehmen → Section-Matching funktioniert (existierende Section gefunden)
+- [ ] Pfad 2: Karte übernehmen → neue Section angelegt wenn kein Match
+- [ ] Bereits übernommene Contributions sind als solche markiert
+- [ ] "Update verfügbar"-Hinweis erscheint wenn neue Contributions vorhanden
+- [ ] RLS: User der nicht Mitglied ist sieht keine Contributions der Gruppe (testen mit direktem DB-Query als fremder User)
+- [ ] Gruppe verlassen → Mitglied sieht Gruppe nicht mehr
+- [ ] Owner löscht Gruppe → alles kaskadiert weg
+
+---
+
 ## Übersicht: Abhängigkeiten
 
 ```
@@ -390,6 +455,9 @@ Etappe 7.6 — Security-Hardening 🔄
          │
          ▼
 Etappe 8 — Polish & Hardening
+         │
+         ▼
+Etappe 9 — Lerngruppen
 ```
 
 **Hinweis:** Etappe 4 und 5 könnten theoretisch parallel laufen, aber sequenziell (4 → 5) ist sicherer, weil die Fragetyp-Komponenten aus Etappe 5 auf den Session-Patterns aus Etappe 4 aufbauen.
