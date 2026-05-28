@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+﻿import type { Metadata } from "next"
 import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
@@ -42,7 +42,7 @@ export default async function GruppenDetailPage({
   const otherContribs = contributorGroups.filter((cg) => cg.contributor_id !== user.id)
 
   return (
-    <div className="px-8 py-6">
+    <div className="px-4 py-4 md:px-8 md:py-6">
       <div className="max-w-[960px]">
         <Link
           href="/gruppen"

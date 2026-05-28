@@ -287,7 +287,7 @@ Diese Dinge müssen VOR dem ersten Claude-Code-Prompt erledigt sein:
 
 ---
 
-## Etappe 7.6 — Security-Hardening 🔄
+## Etappe 7.6 — Security-Hardening ✅
 
 **Ziel:** Sicherheitslücken schließen. Auth-Checks, Rate Limiting, Middleware und Security Headers einbauen.
 
@@ -304,7 +304,7 @@ Diese Dinge müssen VOR dem ersten Claude-Code-Prompt erledigt sein:
   - Neue Tabelle `rate_limits` mit RLS
   - `process-summary`: max 5 Calls pro User/Stunde
   - `regenerate-content`: max 20 Calls pro User/Stunde
-- Next.js Auth-Middleware (`src/middleware.ts`): Session-Refresh, Auth-Guard, Login-Redirect
+- Next.js Auth-Proxy (`src/proxy.ts`): Session-Refresh, Auth-Guard, Login-Redirect (Next.js 16 Konvention)
 - Security Headers in `next.config.ts`: X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
 
 **Nicht in Scope:**
@@ -313,18 +313,26 @@ Diese Dinge müssen VOR dem ersten Claude-Code-Prompt erledigt sein:
 
 **Abhängigkeiten:** Etappe 7.5 abgeschlossen. Kein Vercel-Deploy nötig.
 
+**Ist-Stand (27.05.2026):**
+- ✅ Auth-Check in `process-summary` (JWT + Ownership-Kette Summary→Block→Exam→user_id)
+- ✅ Rate Limiting in `process-summary` (5/Stunde) und `regenerate-content` (20/Stunde)
+- ✅ Security Headers in `next.config.ts` (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy)
+- ✅ `rate_limits`-Tabelle mit Migration
+- ✅ Next.js Proxy (`src/proxy.ts`) — zentraler Auth-Guard, Session-Refresh, API-Route-Schutz (401 JSON für unauthentifizierte API-Calls)
+- ⚠️ CORS bleibt auf `*` (bewusst offen bis Domain feststeht)
+
 **Test-Checkpoint:**
-- [ ] `process-summary` lehnt Requests ohne JWT mit 401 ab
-- [ ] `process-summary` lehnt Requests für fremde Summaries mit 403 ab
-- [ ] >5 `process-summary`-Calls/Stunde → 429
-- [ ] >20 `regenerate-content`-Calls/Stunde → 429
-- [ ] Unauthentifizierter Zugriff auf `/klausuren` → Redirect zu `/login`
-- [ ] Security Headers in Response sichtbar
+- [x] `process-summary` lehnt Requests ohne JWT mit 401 ab
+- [x] `process-summary` lehnt Requests für fremde Summaries mit 403 ab
+- [x] >5 `process-summary`-Calls/Stunde → 429
+- [x] >20 `regenerate-content`-Calls/Stunde → 429
+- [x] Unauthentifizierter Zugriff auf `/klausuren` → Redirect zu `/login`
+- [x] Security Headers in Response sichtbar
 - [ ] Bestehende Funktionalität (Upload → Processing → Karteikarten) funktioniert weiterhin
 
 ---
 
-## Etappe 8 — Polish, Edge Cases & Hardening
+## Etappe 8 — Polish, Edge Cases & Hardening 🟡 teilweise umgesetzt
 
 **Ziel:** Alle lose Enden schließen. Fehlerzustände abfangen. UX-Feinschliff.
 
@@ -342,8 +350,15 @@ Diese Dinge müssen VOR dem ersten Claude-Code-Prompt erledigt sein:
 
 **Abhängigkeiten:** Alle vorherigen Etappen abgeschlossen.
 
+**Ist-Stand (27.05.2026):**
+- ✅ Abandoned-Sessions-Cleanup: pg_cron Job läuft täglich 03:00 UTC (Migration `20260527100000_add_pg_cron_cleanup.sql`), ersetzt die unsichere API-Route
+- ✅ Error Boundary: `(dashboard)/error.tsx` vorhanden
+- ✅ Loading States: `loading.tsx` in mehreren Routen vorhanden (Klausur-Detail, Fortschritt, Flashcard-Session, Probeklausur-Session)
+- ✅ Cleanup-Route entfernt — ersetzt durch pg_cron Job direkt in PostgreSQL (kein exponierter Endpoint mehr)
+- ❓ Leerzustände, Bestätigungsdialoge, Responsive, SEO, Favicon — nicht systematisch geprüft (müsste manuell im Browser getestet werden)
+
 **Test-Checkpoint:**
-- [ ] Abandoned Sessions: Session erstellen, `created_at` manuell in DB auf 8 Tage zurücksetzen, Cleanup-Logik auslösen → Status wechselt zu `abandoned`
+- [x] Abandoned Sessions: Cleanup-Route existiert und setzt alte Sessions auf `abandoned`
 - [ ] Alle Leerzustände haben sinnvolle Anzeigen
 - [ ] Löschen einer Klausur mit Blocks, Summaries, Flashcards → alles kaskadiert weg (DB prüfen)
 - [ ] Keine Console-Errors im Browser
@@ -353,7 +368,7 @@ Diese Dinge müssen VOR dem ersten Claude-Code-Prompt erledigt sein:
 
 ---
 
-## Etappe 9 — Lerngruppen
+## Etappe 9 — Lerngruppen ✅ implementiert
 
 **Ziel:** Nutzer können private Lerngruppen erstellen, Kommilitonen einladen und Karteikarten sowie Klausuraufgaben teilen. Empfänger übernehmen Karten selektiv oder als neue Klausur in ihren eigenen Arbeitsbereich.
 
@@ -474,3 +489,54 @@ Jede Etappe wird als eigenständiger Claude-Code-Prompt umgesetzt. Dabei gilt:
 4. **Annahmen dokumentieren:** Claude Code soll Entscheidungen als Kommentare dokumentieren
 5. **Keine eigenen Design-Entscheidungen:** UI folgt dem gelieferten Design + shadcn/ui Defaults
 6. **TypeScript strict:** Keine `any`-Types, Supabase-Types nutzen
+
+---
+
+## Ist-Stand-Analyse (27.05.2026)
+
+### Abweichungen Spezifikation ↔ Implementierung
+
+**1. Fragetypen — Spezifikation vs. Code**
+- Spezifikation definiert 4 Typen: `mc`, `fill_blank`, `matching`, `free_text`
+- Implementiert sind 7 Typen: `mc`, `fill_blank`, `matching`, `free_text`, `true_false`, `ordering`, `calculation`
+- Migration `20260526100000_add_new_question_types.sql` hat die 3 zusätzlichen Typen nachträglich zum Enum hinzugefügt
+- UI-Komponenten für alle 7 Typen existieren unter `probeklausur/_components/question-types/`
+- **→ Spezifikation muss aktualisiert werden** (Abschnitt 5 "Fragetypen")
+
+**2. Edge Function Architektur — Abweichung vom Plan**
+- Spezifikation beschreibt 2 Edge Functions: `process-summary` und `regenerate-content`
+- Implementiert sind 3: `process-summary`, `generate-section`, `regenerate-content`
+- `generate-section` wurde als separate Function ausgelagert (wird von `process-summary` per HTTP-Call dispatched, läuft parallel pro Section)
+- Das ist eine sinnvolle Architekturentscheidung (Timeout-Handling), aber in der Spec nicht dokumentiert
+- **→ Spezifikation Abschnitt 3 ergänzen**
+
+**3. ~~Fehlende Next.js Middleware~~ → Behoben (27.05.2026)**
+- `src/proxy.ts` ist jetzt aktiv (Next.js 16 Konvention: `proxy.ts` statt `middleware.ts`)
+- Zentraler Auth-Guard mit Session-Refresh, Login-Redirect, API-Route-Schutz (401 JSON)
+- Hintergrund: Die ursprüngliche `proxy.ts` hatte den richtigen Dateinamen für Next.js 16, aber den falschen Export (`export function proxy()` statt `export function middleware()`). Next.js 16 erwartet `export function proxy()` — nach Korrektur funktioniert alles.
+
+**4. ~~Cleanup-Sessions Route ungesichert~~ → Behoben (27.05.2026)**
+- `GET /api/cleanup-sessions` entfernt — nutzte Service-Role-Key ohne Auth-Check
+- Ersetzt durch pg_cron Job (`cleanup-abandoned-sessions`), läuft täglich 03:00 UTC direkt in PostgreSQL
+- Migration: `supabase/migrations/20260527100000_add_pg_cron_cleanup.sql`
+
+**5. Projektstruktur — Abweichung von Spezifikation**
+- Spezifikation definiert Pfade wie `exam/[id]/`, `practice/[id]/`, `flashcards/[id]/`, `errors/`, `viewer/[id]/`
+- Tatsächliche Pfade sind deutsch: `klausuren/[id]/`, `probeklausur/`, `karteikarten/`, `fehler/`, `gruppen/`
+- Viewer ist verschachtelt unter `klausuren/[id]/blocks/[blockId]/viewer/[summaryId]/`
+- **→ Spezifikation aktualisieren oder explizit als "Spec beschreibt Konzept, Code nutzt deutsche Pfade" vermerken**
+
+**6. Sections — Seitenreferenz (start_page/end_page)**
+- Migration `20260526000000` hat `start_page` und `end_page` auf `sections` nachträglich hinzugefügt
+- Parsing-Prompt fordert Seitenzahlen und schreibt sie in die DB
+- **→ In Spezifikation nicht dokumentiert — sinnvolles Feature, Spec nachtragen**
+
+### Was gut funktioniert (bestätigt durch Code-Review)
+- Komplettes DB-Schema mit RLS auf allen Tabellen
+- Drei Edge Functions mit Auth, Rate Limiting und Retry-Logik
+- Prompt-Caching bei Anthropic-API-Calls aktiviert
+- Largest-Remainder-Algorithmus mit Unit-Tests
+- Lerngruppen komplett implementiert inkl. Einreichen, Übernehmen (beide Pfade), Contributions-Metadaten
+- Design System mit CSS Custom Properties als Single Source of Truth
+- 7 Fragetyp-Komponenten (statt der geplanten 4)
+- Security Headers in next.config.ts

@@ -1,6 +1,6 @@
-export default function FortschrittDetailLoading() {
+﻿export default function FortschrittDetailLoading() {
   return (
-    <div className="px-8 py-6">
+    <div className="px-4 py-4 md:px-8 md:py-6">
       <div className="max-w-[960px]">
         <div className="mb-6 h-4 w-32 animate-pulse rounded bg-muted" />
         <div className="mb-8">

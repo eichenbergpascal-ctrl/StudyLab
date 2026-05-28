@@ -144,7 +144,7 @@ function SectionRow({ section, examId }: { section: Section; examId: string }) {
       )}
 
       {/* Section header */}
-      <div className="flex items-center gap-2 px-4 py-3">
+      <div className="flex flex-col gap-2 px-4 py-3 md:flex-row md:items-center">
         <button
           onClick={() => setCardsExpanded((o) => !o)}
           className="flex flex-1 items-start gap-2 text-left"
@@ -167,7 +167,7 @@ function SectionRow({ section, examId }: { section: Section; examId: string }) {
           </div>
         </button>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1 ml-[22px] md:ml-0">
           <Button
             size="sm"
             variant="ghost"
@@ -305,8 +305,8 @@ export function BlockAccordion({
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between px-4 py-3.5 text-left transition-colors hover:bg-muted/40"
       >
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-medium text-foreground">{block.name}</span>
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <span className="truncate text-sm font-medium text-foreground">{block.name}</span>
           <span className="font-mono text-xs text-muted-foreground">
             {block.totalCount} Karten
           </span>

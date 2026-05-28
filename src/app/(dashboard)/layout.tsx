@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
-import { Sidebar } from "@/components/layout/Sidebar"
-import { DashboardHeader } from "@/components/layout/DashboardHeader"
+import { DashboardLayoutClient } from "@/components/layout/DashboardLayoutClient"
 
 export default async function DashboardLayout({
   children,
@@ -13,8 +12,8 @@ export default async function DashboardLayout({
     data: { user },
   } = await supabase.auth.getUser()
 
-  // Middleware handles this redirect, but this is a safety net for
-  // direct Server Component renders where middleware may not have run.
+  // Proxy is the primary auth guard — this is a secondary safety net
+  // for Server Component renders that bypass the proxy (e.g. RSC prefetch).
   if (!user) {
     redirect("/login")
   }
@@ -25,16 +24,8 @@ export default async function DashboardLayout({
     .eq("user_id", user.id)
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <Sidebar errorCount={errorCount ?? 0} />
-
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <DashboardHeader userEmail={user.email} />
-
-        <main className="flex-1 overflow-y-auto">
-          {children}
-        </main>
-      </div>
-    </div>
+    <DashboardLayoutClient userEmail={user.email} errorCount={errorCount ?? 0}>
+      {children}
+    </DashboardLayoutClient>
   )
 }

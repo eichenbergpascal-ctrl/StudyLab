@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import React, { useState, useCallback, useMemo } from "react"
 import Link from "next/link"
@@ -87,7 +87,7 @@ export function FlashcardSession({
     const pct = done > 0 ? Math.round((correct / done) * 100) : 0
 
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center px-8 py-6">
+      <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 py-4 md:px-8 md:py-6">
         <div className="w-full max-w-md text-center">
           <Layers className="mx-auto mb-6 size-10 text-slate-300" strokeWidth={1.5} />
           <h2 className="mb-2 text-xl font-semibold tracking-tight text-foreground">
@@ -125,7 +125,7 @@ export function FlashcardSession({
   }
 
   return (
-    <div className="px-8 py-6">
+    <div className="px-4 py-4 md:px-8 md:py-6">
       <div className="max-w-[960px]">
         <div className="mb-6 flex items-center justify-between">
           <Link

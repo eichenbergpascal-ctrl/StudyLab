@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+﻿import type { Metadata } from "next"
 import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
@@ -39,7 +39,7 @@ export default async function UebernehmenPage({
 
   if (mode === "all") {
     return (
-      <div className="px-8 py-6">
+      <div className="px-4 py-4 md:px-8 md:py-6">
         <div className="max-w-[640px]">
           <Link
             href={`/gruppen/${id}`}
@@ -80,7 +80,7 @@ export default async function UebernehmenPage({
       : { data: [] as { id: string; name: string; exam_id: string }[] }
 
   return (
-    <div className="px-8 py-6">
+    <div className="px-4 py-4 md:px-8 md:py-6">
       <div className="max-w-[640px]">
         <Link
           href={`/gruppen/${id}`}

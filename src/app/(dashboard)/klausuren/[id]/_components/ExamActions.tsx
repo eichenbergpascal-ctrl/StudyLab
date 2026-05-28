@@ -79,7 +79,7 @@ export function ExamActions({ exam }: { exam: Exam }) {
       <div className="flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
           <Pencil strokeWidth={2} />
-          Bearbeiten
+          <span className="hidden sm:inline">Bearbeiten</span>
         </Button>
         <Button
           variant="destructive"
@@ -87,7 +87,7 @@ export function ExamActions({ exam }: { exam: Exam }) {
           onClick={() => setDeleteOpen(true)}
         >
           <Trash2 strokeWidth={2} />
-          Löschen
+          <span className="hidden sm:inline">Löschen</span>
         </Button>
       </div>
 

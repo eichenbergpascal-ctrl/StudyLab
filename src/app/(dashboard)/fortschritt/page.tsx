@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+﻿import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { TrendingUp, Calendar, ChevronRight } from "lucide-react"
@@ -34,7 +34,7 @@ export default async function FortschrittPage() {
   const count = exams?.length ?? 0
 
   return (
-    <div className="px-8 py-6">
+    <div className="px-4 py-4 md:px-8 md:py-6">
       <div className="max-w-[960px]">
         <div className="mb-6">
           <h1 className="mb-1 text-2xl font-semibold tracking-tight text-foreground">

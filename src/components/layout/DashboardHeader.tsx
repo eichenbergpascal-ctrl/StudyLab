@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { LogOut } from "lucide-react"
+import { LogOut, Menu } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
@@ -14,9 +14,10 @@ import {
 
 interface DashboardHeaderProps {
   userEmail: string | undefined
+  onMenuClick?: () => void
 }
 
-export function DashboardHeader({ userEmail }: DashboardHeaderProps) {
+export function DashboardHeader({ userEmail, onMenuClick }: DashboardHeaderProps) {
   const router = useRouter()
 
   async function handleLogout() {
@@ -31,9 +32,18 @@ export function DashboardHeader({ userEmail }: DashboardHeaderProps) {
     : "??"
 
   return (
-    <header className="h-14 flex items-center justify-end px-6 border-b border-border bg-card shrink-0">
+    <header className="h-14 flex items-center px-4 md:px-6 border-b border-border bg-card shrink-0">
+      <button
+        onClick={onMenuClick}
+        className="md:hidden flex items-center justify-center size-9 rounded-md text-muted-foreground hover:bg-slate-100 hover:text-foreground transition-colors duration-100"
+        aria-label="Menü öffnen"
+      >
+        <Menu className="size-5" strokeWidth={2} />
+      </button>
+
+      <div className="flex-1" />
+
       <DropdownMenu>
-        {/* base-ui DropdownMenuTrigger renders as <button> — no asChild needed */}
         <DropdownMenuTrigger
           className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-slate-700 hover:bg-slate-100 transition-colors duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Benutzermenü"

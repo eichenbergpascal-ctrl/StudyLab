@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation"
+﻿import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, CheckSquare, Play, Clock, CheckCircle2 } from "lucide-react"
 import { buttonVariants } from "@/components/ui/button"
@@ -137,7 +137,7 @@ export default async function ProbeklausurOverviewPage({
     !!openSessionFull || (openPartialSessions ?? []).length > 0
 
   return (
-    <div className="px-8 py-6">
+    <div className="px-4 py-4 md:px-8 md:py-6">
       <div className="max-w-[960px]">
         <Link
           href={`/klausuren/${examId}`}

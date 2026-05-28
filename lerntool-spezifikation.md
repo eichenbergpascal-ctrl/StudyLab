@@ -17,7 +17,7 @@ Ein Multi-User-Lerntool zur gezielten Klausurvorbereitung auf Basis selbst erste
 | Backend / Datenbank | Supabase (PostgreSQL, Auth, Storage, Edge Functions, Realtime) | Einziges Backend-System |
 | Authentifizierung | Supabase Auth (E-Mail/Passwort + Google OAuth) | Session via `@supabase/ssr`, RLS auf allen Tabellen |
 | Supabase Client | `@supabase/supabase-js` + `@supabase/ssr` | Browser-Client (anon-Key + RLS) + Server-Client (Cookie-Auth) |
-| Edge Functions | Supabase Edge Functions (Deno/TypeScript) | 150s Timeout, für Claude API Calls |
+| Edge Functions | Supabase Edge Functions (Deno/TypeScript) | 150s Timeout, 3 Functions: `process-summary`, `generate-section`, `regenerate-content` |
 | LLM | Anthropic API (Claude Sonnet) via `@anthropic-ai/sdk` | Zweistufige Pipeline: Parsing → Generierung pro Section |
 | PDF-Parsing | LLM-basiert (PDF als Base64 via Document-Feature) | Kein separates Parsing-Tool |
 | Deployment | Vercel (Frontend) + Supabase Cloud (Backend) | Git-Push → Auto-Deploy via GitHub |
@@ -44,33 +44,43 @@ src/
 │   ├── (auth)/                 # Öffentliche Seiten (Login, Register)
 │   │   ├── login/
 │   │   └── register/
-│   ├── (dashboard)/            # Geschützter Bereich
+│   ├── (dashboard)/            # Geschützter Bereich (deutsche Pfade)
 │   │   ├── layout.tsx          # Sidebar, Navigation, Auth-Guard
 │   │   ├── page.tsx            # Dashboard (Klausur-Liste)
-│   │   ├── exam/[id]/          # Klausur-Detail
-│   │   ├── practice/[id]/      # Probeklausur-Session
-│   │   ├── flashcards/[id]/    # Karteikarten-Session
-│   │   ├── errors/             # Fehler-Pool
-│   │   └── viewer/[id]/        # Zusammenfassungs-Viewer
-│   ├── api/                    # API Routes (falls nötig)
+│   │   ├── klausuren/[id]/     # Klausur-Detail + Blocks + Viewer
+│   │   ├── karteikarten/       # Karteikarten-Übersicht
+│   │   ├── probeklausuren/     # Probeklausur-Übersicht
+│   │   ├── fehler/             # Fehler-Pool (Karteikarten + Klausuren)
+│   │   ├── fortschritt/        # Lernfortschritt pro Klausur
+│   │   └── gruppen/            # Lerngruppen (Erstellen, Beitreten, Einreichen, Übernehmen)
+│   ├── api/                    # API Routes (cleanup-sessions entfernt — läuft jetzt als pg_cron Job)
+│   ├── auth/callback/          # OAuth Callback
 │   └── layout.tsx              # Root Layout
 ├── components/
 │   ├── ui/                     # shadcn/ui Komponenten
-│   └── ...                     # App-spezifische Komponenten
+│   ├── layout/                 # Sidebar, DashboardHeader
+│   └── pdf-viewer/             # PDF-Viewer-Komponenten
 ├── lib/
 │   ├── supabase/
 │   │   ├── client.ts           # Browser-Client
-│   │   ├── server.ts           # Server-Client
-│   │   └── middleware.ts       # Auth-Middleware
+│   │   └── server.ts           # Server-Client
 │   ├── types/
-│   │   └── database.ts         # Auto-generierte Supabase-Types
+│   │   ├── database.types.ts   # Auto-generierte Supabase-Types
+│   │   └── exam-questions.ts   # Fragetyp-Definitionen
 │   └── utils/
-├── hooks/                      # Custom React Hooks
-└── supabase/
-    └── functions/              # Edge Functions (Deno)
-        ├── process-summary/
-        └── regenerate-content/
+│       ├── largest-remainder.ts  # Fragenverteilungs-Algorithmus
+│       └── __tests__/            # Unit Tests
+├── proxy.ts                    # Proxy-Konfiguration
+supabase/
+├── functions/                  # Edge Functions (Deno)
+│   ├── process-summary/        # PDF-Parsing + Section-Dispatch
+│   ├── generate-section/       # Generierung pro Section (parallel)
+│   └── regenerate-content/     # On-Demand-Nachgenerierung
+├── migrations/                 # SQL-Migrationen (11 Dateien)
+└── config.toml
 ```
+
+> **Hinweis:** Die Spezifikation v1.0 nutzte englische Pfade (`exam/`, `practice/`, `errors/`). Die Implementierung verwendet deutsche Pfade (`klausuren/`, `probeklausur/`, `fehler/`). Der Viewer ist verschachtelt unter `klausuren/[id]/blocks/[blockId]/viewer/[summaryId]/` statt als eigene Top-Level-Route.
 
 ---
 
@@ -119,17 +129,23 @@ summaries
   processing_error (text, nullable),
   sections_total (int, nullable),
   sections_processed (int, default 0),
-  created_at
+  created_at, updated_at (timestamptz, nullable)
 
 sections
-  id, summary_id (FK summaries), title, sort_order, content_text (Markdown-Format)
+  id, summary_id (FK summaries), title, sort_order, content_text (Markdown-Format),
+  start_page (int, nullable), end_page (int, nullable)  -- physische Seitenzahlen im PDF
 
 flashcards
-  id, section_id (FK sections), question, answer, is_user_created (bool), created_at
+  id, section_id (FK sections), question, answer, is_user_created (bool),
+  source_contribution_id (uuid, nullable),  -- FK contributions, für Lerngruppen-Übernahme
+  created_at
 
 exam_questions
-  id, section_id (FK sections), question_type (enum: mc/fill_blank/matching/free_text),
-  question_data (JSONB), answer_data (JSONB), is_user_created (bool), created_at
+  id, section_id (FK sections),
+  question_type (enum: mc/fill_blank/matching/free_text/true_false/ordering/calculation),
+  question_data (JSONB), answer_data (JSONB), is_user_created (bool),
+  source_contribution_id (uuid, nullable),  -- FK contributions, für Lerngruppen-Übernahme
+  created_at
 
 attempts
   id, user_id (FK auth.users), flashcard_id (FK, nullable), exam_question_id (FK, nullable),
@@ -207,10 +223,12 @@ WHERE is_correct = false;
    - Output: Strukturierte Section-Liste mit Markdown-Content pro Section
    - Ergebnis wird in `sections`-Tabelle geschrieben, `sections_total` gesetzt
    - Status wechselt zu `generating`
-6. **Schritt 2 — Generierungs-Calls (pro Section, parallel):**
+6. **Schritt 2 — Generierungs-Calls (pro Section, parallel via `generate-section` Edge Function):**
+   - `process-summary` dispatcht einen HTTP-Call pro Section an die separate Edge Function `generate-section`
+   - Dies umgeht das 150s-Timeout-Problem: jede Section läuft in ihrem eigenen Function-Invocation
    - Input: `content_text` (Markdown) der jeweiligen Section
    - Output: 3–5 Karteikarten + 3–5 Klausuraufgaben pro Section
-   - Calls laufen parallel (Promise.allSettled), `sections_processed` wird pro fertigem Call inkrementiert
+   - Calls laufen parallel (Promise.all auf die Dispatch-Responses), `sections_processed` wird pro fertigem Call inkrementiert
    - Fehler in einer Section blockieren nicht die anderen
 7. Alle Sections fertig → `processing_status: completed`. Bei Fehlern → `failed` mit `processing_error`.
 
@@ -322,12 +340,17 @@ WHERE is_correct = false;
 
 ### Fragetypen
 
-- Multiple Choice
-- Lückentext
-- Zuordnung
-- Freitext
+- Multiple Choice (`mc`)
+- Lückentext (`fill_blank`)
+- Zuordnung (`matching`)
+- Freitext (`free_text`)
+- Wahr/Falsch (`true_false`)
+- Reihenfolge (`ordering`)
+- Rechenaufgabe (`calculation`)
 
 Diese Fragetypen werden **nur in Probeklausuren und Block-Übungen** verwendet, nicht bei Karteikarten. Der Fragetyp wird bei der Generierung automatisch passend zum Inhalt gewählt (kein fester Mix).
+
+> **Hinweis:** Die ursprüngliche Spezifikation v1.0 definierte nur 4 Typen (mc, fill_blank, matching, free_text). Die 3 zusätzlichen Typen (true_false, ordering, calculation) wurden nach ersten Nutzungstests ergänzt (Migration `20260526100000`). UI-Komponenten existieren für alle 7 Typen.
 
 ### Aufgabenpool
 

@@ -1,6 +1,6 @@
-export default function FlashcardSessionLoading() {
+﻿export default function FlashcardSessionLoading() {
   return (
-    <div className="flex h-full items-center justify-center px-8 py-6">
+    <div className="flex h-full items-center justify-center px-4 py-4 md:px-8 md:py-6">
       <div className="w-full max-w-xl">
         <div className="mb-4 h-2 w-full animate-pulse rounded-full bg-muted" />
         <div className="rounded-xl border border-[#E3E8ED] bg-white p-8 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">

@@ -33,8 +33,12 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isAuthRoute = pathname === "/login" || pathname === "/register"
   const isCallbackRoute = pathname.startsWith("/auth/")
+  const isApiRoute = pathname.startsWith("/api/")
 
   if (!user && !isAuthRoute && !isCallbackRoute) {
+    if (isApiRoute) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
     const url = request.nextUrl.clone()
     url.pathname = "/login"
     return NextResponse.redirect(url)

@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+﻿import type { Metadata } from "next"
 import { redirect } from "next/navigation"
 import { BookOpen } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
@@ -27,7 +27,7 @@ export default async function KlausurenPage() {
   const count = exams?.length ?? 0
 
   return (
-    <div className="px-8 py-6">
+    <div className="px-4 py-4 md:px-8 md:py-6">
       <div className="max-w-[960px]">
         <div className="mb-6 flex items-start justify-between">
           <div>

@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,7 @@ export default function DashboardError({
   reset: () => void
 }) {
   return (
-    <div className="flex h-full items-center justify-center px-8 py-6">
+    <div className="flex h-full items-center justify-center px-4 py-4 md:px-8 md:py-6">
       <div className="w-full max-w-sm rounded-lg border border-[#E3E8ED] bg-white p-8 text-center shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
         <AlertCircle
           className="mx-auto mb-4 size-10 text-muted-foreground"

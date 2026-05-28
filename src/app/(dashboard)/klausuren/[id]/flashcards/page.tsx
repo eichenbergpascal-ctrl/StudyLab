@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation"
+﻿import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Layers } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
@@ -130,7 +130,7 @@ export default async function FlashcardsPage({
   const blocksWithSections = blocks.filter((b) => b.summaries.some((sg) => sg.sections.length > 0))
 
   return (
-    <div className="px-8 py-6">
+    <div className="px-4 py-4 md:px-8 md:py-6">
       <div className="max-w-[960px]">
         <Link
           href={`/klausuren/${id}`}

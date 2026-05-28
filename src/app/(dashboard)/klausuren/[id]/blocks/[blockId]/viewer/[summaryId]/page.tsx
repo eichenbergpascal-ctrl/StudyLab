@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation"
+﻿import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
@@ -155,7 +155,7 @@ export default async function SummaryViewerPage({
     <div className="flex h-full min-h-0">
       {/* PDF area */}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <div className="shrink-0 px-8 py-6">
+        <div className="shrink-0 px-4 py-4 md:px-8 md:py-6">
           <Link
             href={`/klausuren/${examId}/blocks/${blockId}`}
             className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"

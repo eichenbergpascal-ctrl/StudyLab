@@ -153,7 +153,7 @@ export function ExamSectionRow({
   return (
     <>
       {/* Section header */}
-      <div className="flex items-center gap-2 px-4 py-3">
+      <div className="flex flex-col gap-2 px-4 py-3 md:flex-row md:items-center">
         <button
           onClick={() => setExpanded((o) => !o)}
           className="flex flex-1 items-start gap-2 text-left"
@@ -171,7 +171,7 @@ export function ExamSectionRow({
           </div>
         </button>
 
-        <div className="flex shrink-0 items-center gap-1">
+        <div className="flex shrink-0 items-center gap-1 ml-[22px] md:ml-0">
           <Button
             size="sm"
             variant="ghost"

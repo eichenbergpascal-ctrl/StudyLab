@@ -1,6 +1,6 @@
-export default function ExamSessionLoading() {
+﻿export default function ExamSessionLoading() {
   return (
-    <div className="flex h-full flex-col px-8 py-6">
+    <div className="flex h-full flex-col px-4 py-4 md:px-8 md:py-6">
       <div className="mb-4 h-2 w-full animate-pulse rounded-full bg-muted" />
       <div className="mx-auto w-full max-w-2xl">
         <div className="mb-6 h-4 w-24 animate-pulse rounded bg-muted" />

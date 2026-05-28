@@ -1,4 +1,4 @@
-import { notFound, redirect } from "next/navigation"
+﻿import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, CreditCard } from "lucide-react"
 import { createClient } from "@/lib/supabase/server"
@@ -43,7 +43,7 @@ export default async function BlockDetailPage({
     .order("created_at", { ascending: false })
 
   return (
-    <div className="px-8 py-6">
+    <div className="px-4 py-4 md:px-8 md:py-6">
       <div className="max-w-[960px]">
         <Link
           href={`/klausuren/${examId}`}

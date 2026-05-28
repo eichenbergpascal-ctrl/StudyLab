@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+﻿import type { Metadata } from "next"
 import { notFound, redirect } from "next/navigation"
 import Link from "next/link"
 import { ArrowLeft, Layers, ChevronRight, CheckSquare, TrendingUp } from "lucide-react"
@@ -73,7 +73,7 @@ export default async function ExamDetailPage({
     .order("created_at", { ascending: true })
 
   return (
-    <div className="px-8 py-6">
+    <div className="px-4 py-4 md:px-8 md:py-6">
       <div className="max-w-[960px]">
         <Link
           href="/klausuren"
@@ -83,7 +83,7 @@ export default async function ExamDetailPage({
           Alle Klausuren
         </Link>
 
-        <div className="mb-8 flex items-start justify-between gap-4">
+        <div className="mb-8 flex flex-col gap-3 md:flex-row md:items-start md:justify-between md:gap-4">
           <div>
             <h1 className="mb-1.5 text-2xl font-semibold tracking-tight text-foreground">
               {exam.name}

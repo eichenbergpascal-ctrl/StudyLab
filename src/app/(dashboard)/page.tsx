@@ -1,4 +1,4 @@
-import type { Metadata } from "next"
+﻿import type { Metadata } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { FileText, Loader2, Plus } from "lucide-react"
@@ -147,7 +147,7 @@ export default async function DashboardPage() {
 
   if (exams.length === 0) {
     return (
-      <div className="px-8 py-6">
+      <div className="px-4 py-4 md:px-8 md:py-6">
         <div className="max-w-[960px]">
           <h1 className="mb-1 text-2xl font-semibold tracking-tight text-foreground">
             Willkommen bei StudyLab
@@ -360,7 +360,7 @@ export default async function DashboardPage() {
   const showAllLink = totalExams >= 4
 
   return (
-    <div className="px-8 py-6">
+    <div className="px-4 py-4 md:px-8 md:py-6">
       <div className="max-w-[960px]">
         <h1 className="mb-1 text-2xl font-semibold tracking-tight text-foreground">
           Willkommen bei StudyLab
