@@ -54,7 +54,7 @@ export default async function FortschrittPage() {
               Noch keine Klausuren angelegt
             </h2>
             <p className="max-w-xs text-sm text-muted-foreground">
-              Erstelle zuerst eine Klausur unter "Klausuren", um deinen Fortschritt zu verfolgen.
+              Erstelle zuerst eine Klausur unter &ldquo;Klausuren&rdquo;, um deinen Fortschritt zu verfolgen.
             </p>
           </div>
         ) : (

@@ -133,7 +133,6 @@ export function ExamQuestionDialog({
   }, [blanksCount])
 
   // Initialize state when dialog opens
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!open) return
     const type = initialQuestionType ?? "free_text"
@@ -210,6 +209,7 @@ export function ExamQuestionDialog({
       setCalcSolutionSteps((ad.solution_steps as string[]) ?? [""])
       setCalcExplanation((ad.explanation as string) ?? "")
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
   const isSubmitDisabled = useMemo(() => {

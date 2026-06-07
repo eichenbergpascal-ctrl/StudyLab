@@ -29,7 +29,7 @@ export function largestRemainder(
 
   // Apply minimum 1 for each eligible block
   const counts = computed.map((c) => Math.max(1, c.naturalFloor))
-  let totalAllocated = counts.reduce((sum, c) => sum + c, 0)
+  const totalAllocated = counts.reduce((sum, c) => sum + c, 0)
   let remaining = totalQuestions - totalAllocated
 
   if (remaining > 0) {

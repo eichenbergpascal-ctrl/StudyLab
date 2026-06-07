@@ -61,7 +61,7 @@ export function ExamErrorSession({
   const currentQuestion = questions[index] ?? null
 
   const handleRate = useCallback(
-    async (isCorrect: boolean, response: unknown) => {
+    async (isCorrect: boolean, _response: unknown) => {
       if (!currentQuestion || isRating) return
       setIsRating(true)
 

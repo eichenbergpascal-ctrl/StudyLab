@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react"
 import Link from "next/link"
-import { ArrowLeft, CheckSquare, Check, X } from "lucide-react"
+import { ArrowLeft, CheckSquare } from "lucide-react"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
 import type { TypedExamQuestion, SessionAnswers } from "@/lib/types/exam-questions"

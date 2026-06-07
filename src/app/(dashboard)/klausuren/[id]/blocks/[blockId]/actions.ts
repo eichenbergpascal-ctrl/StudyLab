@@ -168,8 +168,8 @@ export async function retrySummaryProcessing(
 
 export async function replaceSummaryPdf(
   summaryId: string,
-  examId: string,
-  blockId: string
+  _examId: string,
+  _blockId: string
 ): Promise<{ storagePath?: string; error?: string }> {
   const supabase = await createClient()
   const {
