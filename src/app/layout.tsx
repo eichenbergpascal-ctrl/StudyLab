@@ -27,14 +27,6 @@ const fontMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: { template: "%s | StudyLab", default: "StudyLab" },
   description: "Dein persönlicher Lernbereich für die Klausurvorbereitung.",
-  icons: {
-    icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/icon-192.png", type: "image/png", sizes: "192x192" },
-      { url: "/icon-512.png", type: "image/png", sizes: "512x512" },
-    ],
-    apple: { url: "/icon-192.png", sizes: "192x192" },
-  },
 }
 
 export default function RootLayout({
