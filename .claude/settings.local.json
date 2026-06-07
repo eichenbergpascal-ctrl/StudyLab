@@ -66,7 +66,9 @@
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\pasca\\\\Documents\\\\Claude\\\\Projects\\\\Lernapp\\\\src\" -Recurse | Where-Object { $_.Extension -eq '.tsx' -or $_.Extension -eq '.ts' } | ForEach-Object { $_.FullName })",
       "Bash(pnpm tsc *)",
       "Bash(mkdir -p \"C:\\\\Users\\\\pasca\\\\Documents\\\\Claude\\\\Projects\\\\Lernapp\\\\src\\\\app\\\\\\(dashboard\\)\\\\gruppen\\\\[id]\\\\einreichen\\\\_components\")",
-      "Bash(mkdir -p \"C:\\\\Users\\\\pasca\\\\Documents\\\\Claude\\\\Projects\\\\Lernapp\\\\src\\\\app\\\\\\(dashboard\\)\\\\gruppen\\\\[id]\\\\uebernehmen\\\\_components\")"
+      "Bash(mkdir -p \"C:\\\\Users\\\\pasca\\\\Documents\\\\Claude\\\\Projects\\\\Lernapp\\\\src\\\\app\\\\\\(dashboard\\)\\\\gruppen\\\\[id]\\\\uebernehmen\\\\_components\")",
+      "Bash(Get-ChildItem C:\\\\Users\\\\pasca\\\\Documents\\\\Claude\\\\Projects\\\\Lernapp *)",
+      "Bash(supabase functions *)"
     ]
   }
 }

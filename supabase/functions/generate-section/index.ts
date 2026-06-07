@@ -178,7 +178,7 @@ Nur valides JSON, kein Text davor oder danach.
 Wähle die 3–5 passendsten Aufgabentypen für den Inhalt. Nicht alle 7 Typen erzwingen.`
 
 const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://study-lab-flame.vercel.app",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 }
@@ -310,11 +310,10 @@ async function callAnthropic(
       headers: {
         "x-api-key": ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
-        "anthropic-beta": "prompt-caching-2024-07-31",
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
+        model: "claude-sonnet-4-6",
         max_tokens: maxTokens,
         system: [
           {
@@ -348,6 +347,14 @@ async function callAnthropic(
   })
 }
 
+function sanitizeErrorMessage(err: unknown): string {
+  const message = err instanceof Error ? err.message : String(err)
+  if (message.startsWith("Anthropic ")) {
+    return "AI processing failed — please try again"
+  }
+  return message
+}
+
 // ---- Handler --------------------------------------------------------------
 
 // deno-lint-ignore no-explicit-any
@@ -374,7 +381,14 @@ Deno.serve(async (req: Request) => {
   }
 
   const authHeader = req.headers.get("Authorization") ?? ""
-  if (authHeader !== `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`) {
+  const expected = `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+  const enc = new TextEncoder()
+  const a = enc.encode(authHeader)
+  const b = enc.encode(expected)
+  const authorized =
+    a.byteLength === b.byteLength &&
+    crypto.subtle.timingSafeEqual(a, b)
+  if (!authorized) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), {
       status: 401,
       headers: { ...CORS_HEADERS, "content-type": "application/json" },
@@ -449,8 +463,7 @@ Deno.serve(async (req: Request) => {
       )
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    console.error(`Generation failed for section ${sectionId}:`, message)
+    console.error(`Generation failed for section ${sectionId}:`, sanitizeErrorMessage(err))
   }
 
   // Always increment — the RPC checks flashcard count to determine final status

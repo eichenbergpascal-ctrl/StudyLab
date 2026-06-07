@@ -9,8 +9,29 @@ import { largestRemainder } from "@/lib/utils/largest-remainder"
 
 function generateInviteCode(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-  const bytes = randomBytes(6)
-  return Array.from(bytes, (b) => chars[b % 36]).join("")
+  const LIMIT = Math.floor(256 / 36) * 36 // 252 — values 252–255 are discarded
+  const result: string[] = []
+  while (result.length < 6) {
+    const [b] = randomBytes(1)
+    if (b < LIMIT) result.push(chars[b % 36])
+  }
+  return result.join("")
+}
+
+type DbClient = Awaited<ReturnType<typeof createClient>>
+
+async function isMember(
+  supabase: DbClient,
+  groupId: string,
+  userId: string
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("study_group_members")
+    .select("user_id")
+    .eq("group_id", groupId)
+    .eq("user_id", userId)
+    .maybeSingle()
+  return data !== null
 }
 
 export async function createGroup(
@@ -98,6 +119,9 @@ export async function leaveGroup(
         "Als Eigentümer kannst du die Gruppe nicht verlassen. Lösche die Gruppe stattdessen.",
     }
   }
+
+  const member = await isMember(supabase, group_id, user.id)
+  if (!member) return { error: "Du bist kein Mitglied dieser Gruppe." }
 
   const { error } = await supabase
     .from("study_group_members")
@@ -274,6 +298,7 @@ export async function submitContributions(
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect("/login")
+  if (!(await isMember(supabase, group_id, user.id))) return { error: "Forbidden" }
 
   type CardMeta = { block_name: string; section_title: string; card_data: Json }
   const metaMap = new Map<string, CardMeta>()
@@ -564,6 +589,7 @@ export async function getContributionsForGroup(
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect("/login")
+  if (!(await isMember(supabase, group_id, user.id))) return []
 
   const { data: contributions } = await supabase
     .from("contributions")
@@ -634,6 +660,7 @@ export async function adoptAllAsNewExam(
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect("/login")
+  if (!(await isMember(supabase, group_id, user.id))) return { error: "Forbidden" }
 
   const { data: contributions } = await supabase
     .from("contributions")
@@ -798,10 +825,15 @@ export async function adoptSelective(
   const contribIds = items.map((i) => i.contribution_id)
   const { data: contributions } = await supabase
     .from("contributions")
-    .select("id, source_type, section_title, card_data")
+    .select("id, source_type, section_title, card_data, group_id")
     .in("id", contribIds)
 
   if (!contributions?.length) return { error: "Beiträge nicht gefunden." }
+
+  const groupIds = [...new Set(contributions.map((c) => c.group_id))]
+  for (const gid of groupIds) {
+    if (!(await isMember(supabase, gid, user.id))) return { error: "Forbidden" }
+  }
 
   // Get existing summaries + sections for the target block
   const { data: rawSummaries } = await supabase
@@ -926,6 +958,7 @@ export async function getGroupDetail(
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) redirect("/login")
+  if (!(await isMember(supabase, group_id, user.id))) return null
 
   const { data: group } = await supabase
     .from("study_groups")

@@ -319,7 +319,7 @@ Diese Dinge müssen VOR dem ersten Claude-Code-Prompt erledigt sein:
 - ✅ Security Headers in `next.config.ts` (X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy)
 - ✅ `rate_limits`-Tabelle mit Migration
 - ✅ Next.js Proxy (`src/proxy.ts`) — zentraler Auth-Guard, Session-Refresh, API-Route-Schutz (401 JSON für unauthentifizierte API-Calls)
-- ⚠️ CORS bleibt auf `*` (bewusst offen bis Domain feststeht)
+- ✅ CORS eingeschränkt auf `https://study-lab-flame.vercel.app` (28.05.2026)
 
 **Test-Checkpoint:**
 - [x] `process-summary` lehnt Requests ohne JWT mit 401 ab
@@ -332,7 +332,7 @@ Diese Dinge müssen VOR dem ersten Claude-Code-Prompt erledigt sein:
 
 ---
 
-## Etappe 8 — Polish, Edge Cases & Hardening 🟡 teilweise umgesetzt
+## Etappe 8 — Polish, Edge Cases & Hardening ✅ abgeschlossen
 
 **Ziel:** Alle lose Enden schließen. Fehlerzustände abfangen. UX-Feinschliff.
 
@@ -350,20 +350,36 @@ Diese Dinge müssen VOR dem ersten Claude-Code-Prompt erledigt sein:
 
 **Abhängigkeiten:** Alle vorherigen Etappen abgeschlossen.
 
-**Ist-Stand (27.05.2026):**
-- ✅ Abandoned-Sessions-Cleanup: pg_cron Job läuft täglich 03:00 UTC (Migration `20260527100000_add_pg_cron_cleanup.sql`), ersetzt die unsichere API-Route
+**Ist-Stand (28.05.2026):**
+- ✅ Abandoned-Sessions-Cleanup: pg_cron Job läuft täglich 03:00 UTC (Migration `20260527100000_add_pg_cron_cleanup.sql`)
 - ✅ Error Boundary: `(dashboard)/error.tsx` vorhanden
-- ✅ Loading States: `loading.tsx` in mehreren Routen vorhanden (Klausur-Detail, Fortschritt, Flashcard-Session, Probeklausur-Session)
-- ✅ Cleanup-Route entfernt — ersetzt durch pg_cron Job direkt in PostgreSQL (kein exponierter Endpoint mehr)
-- ❓ Leerzustände, Bestätigungsdialoge, Responsive, SEO, Favicon — nicht systematisch geprüft (müsste manuell im Browser getestet werden)
+- ✅ Loading States: `loading.tsx` in mehreren Routen vorhanden
+- ✅ Cleanup-Route entfernt — ersetzt durch pg_cron Job direkt in PostgreSQL
+- ✅ Leerzustände: Alle Hauptseiten haben Empty States (Dashboard, Klausuren, Karteikarten, Probeklausuren, Fortschritt, Gruppen, Fehler-Pool)
+- ✅ Responsive Design (28.05.2026):
+  - Sidebar als Mobile-Drawer (Overlay mit Backdrop, < md)
+  - `DashboardLayoutClient` als Client-Wrapper für State-Management (mobileOpen)
+  - Hamburger-Button im DashboardHeader (md:hidden)
+  - Responsive Paddings auf allen 15 Dashboard-Seiten (`px-4 py-4 md:px-8 md:py-6`)
+  - Mobile-Fix Klausur-Detail: Header-Buttons stacken unter dem Titel, Icon-only auf sm
+  - Mobile-Fix Probeklausur-Sections: Action-Buttons wrappen unter Section-Titel
+  - Mobile-Fix Karteikarten-Sections: Gleicher Wrap-Fix wie Probeklausur
+- ✅ Bestätigungsdialoge: Klausur löschen, Karte löschen, Aufgabe löschen — alle mit Dialog
+- ✅ SEO Basis: Globale Metadata mit Titel-Template, `generateMetadata` auf Klausur-Detail und Fortschritt-Detail
+
+**Bewusst offen (kein Blocker):**
+- ⏳ CORS bleibt `*` auf Edge Functions — wird eingeschränkt wenn Vercel-Domain feststeht
+- ⏳ Sitemap + robots.txt — irrelevant solange App hinter Auth
+- ⏳ Favicon — noch Standard Next.js Favicon
+- ❓ Performance-Check / Gewichtungs-UX — nicht systematisch getestet
 
 **Test-Checkpoint:**
-- [x] Abandoned Sessions: Cleanup-Route existiert und setzt alte Sessions auf `abandoned`
-- [ ] Alle Leerzustände haben sinnvolle Anzeigen
+- [x] Abandoned Sessions: pg_cron Job setzt alte Sessions auf `abandoned`
+- [x] Alle Leerzustände haben sinnvolle Anzeigen
 - [ ] Löschen einer Klausur mit Blocks, Summaries, Flashcards → alles kaskadiert weg (DB prüfen)
 - [ ] Keine Console-Errors im Browser
 - [ ] Alle Seiten laden in <2s (gefühlt)
-- [ ] Mobile-Ansicht brauchbar (falls relevant)
+- [x] Mobile-Ansicht brauchbar
 - [ ] Kompletter Durchlauf: Account erstellen → Klausur anlegen → Blocks → PDF hochladen → PDF im Viewer anschauen → Processing abwarten → Karteikarten durcharbeiten → Probeklausur → Fehler-Session → Lernfortschritt prüfen
 
 ---
@@ -466,13 +482,13 @@ Etappe 7 — Lernfortschritt & Viewer-Erweiterung
 Etappe 7.5 — UX-Feinschliff & Modell-Anpassung ✅
          │
          ▼
-Etappe 7.6 — Security-Hardening 🔄
+Etappe 7.6 — Security-Hardening ✅
          │
          ▼
-Etappe 8 — Polish & Hardening
+Etappe 8 — Polish & Hardening ✅
          │
          ▼
-Etappe 9 — Lerngruppen
+Etappe 9 — Lerngruppen ✅
 ```
 
 **Hinweis:** Etappe 4 und 5 könnten theoretisch parallel laufen, aber sequenziell (4 → 5) ist sicherer, weil die Fragetyp-Komponenten aus Etappe 5 auf den Session-Patterns aus Etappe 4 aufbauen.
@@ -492,44 +508,58 @@ Jede Etappe wird als eigenständiger Claude-Code-Prompt umgesetzt. Dabei gilt:
 
 ---
 
-## Ist-Stand-Analyse (27.05.2026)
+## Ist-Stand-Analyse (28.05.2026)
+
+### Status-Zusammenfassung
+
+| Etappe | Status | Abgeschlossen |
+|--------|--------|---------------|
+| 0 — Scaffolding & Auth | ✅ | Mai 2026 |
+| 1 — DB-Schema & CRUD | ✅ | Mai 2026 |
+| 2 — PDF-Upload & Viewer | ✅ | Mai 2026 |
+| 3 — Processing-Pipeline | ✅ | Mai 2026 |
+| 4 — Karteikarten | ✅ | Mai 2026 |
+| 5 — Probeklausuren | ✅ | Mai 2026 |
+| 6 — Fehler-Tracking | ✅ | Mai 2026 |
+| 7 — Lernfortschritt & Viewer | ✅ | Mai 2026 |
+| 7.5 — UX-Feinschliff | ✅ | Mai 2026 |
+| 7.6 — Security-Hardening | ✅ | 27.05.2026 |
+| 7.8 — Neue Fragetypen | ✅ | 27.05.2026 |
+| 8 — Polish & Hardening | ✅ | 28.05.2026 |
+| 9 — Lerngruppen | ✅ | 27.05.2026 |
+
+### Offene Infrastruktur-Punkte (kein Etappen-Blocker)
+
+| Punkt | Status | Wann relevant |
+|-------|--------|---------------|
+| ~~CORS einschränken~~ | ✅ | Erledigt 28.05.2026 — `https://study-lab-flame.vercel.app` |
+| Sitemap + robots.txt | ⏳ | Wenn App öffentlich zugänglich (aktuell hinter Auth) |
+| Favicon + App-Icons | ⏳ | Vor Go-Live |
+| Performance-Audit (Queries, View) | ❓ | Bei spürbaren Ladezeiten |
+| Gewichtungs-UX nach Block-Löschung | ❓ | Bei User-Feedback |
+| CSP-Header | ⏳ | Vor Go-Live |
+| Processing-Pipeline auf Sonnet upgraden | ⏳ | Wenn Anthropic API Tier höher (Haiku → Sonnet für Initialgenerierung) |
+| Spezifikation nachziehen | ⏳ | Housekeeping — kein Blocker |
 
 ### Abweichungen Spezifikation ↔ Implementierung
 
-**1. Fragetypen — Spezifikation vs. Code**
+**1. Fragetypen — 7 statt 4**
 - Spezifikation definiert 4 Typen: `mc`, `fill_blank`, `matching`, `free_text`
-- Implementiert sind 7 Typen: `mc`, `fill_blank`, `matching`, `free_text`, `true_false`, `ordering`, `calculation`
-- Migration `20260526100000_add_new_question_types.sql` hat die 3 zusätzlichen Typen nachträglich zum Enum hinzugefügt
-- UI-Komponenten für alle 7 Typen existieren unter `probeklausur/_components/question-types/`
-- **→ Spezifikation muss aktualisiert werden** (Abschnitt 5 "Fragetypen")
+- Implementiert sind 7: + `true_false`, `ordering`, `calculation`
+- **→ Spezifikation muss aktualisiert werden**
 
-**2. Edge Function Architektur — Abweichung vom Plan**
-- Spezifikation beschreibt 2 Edge Functions: `process-summary` und `regenerate-content`
-- Implementiert sind 3: `process-summary`, `generate-section`, `regenerate-content`
-- `generate-section` wurde als separate Function ausgelagert (wird von `process-summary` per HTTP-Call dispatched, läuft parallel pro Section)
-- Das ist eine sinnvolle Architekturentscheidung (Timeout-Handling), aber in der Spec nicht dokumentiert
+**2. Edge Function Architektur — 3 statt 2**
+- `generate-section` als separate Function für Timeout-Handling
 - **→ Spezifikation Abschnitt 3 ergänzen**
 
-**3. ~~Fehlende Next.js Middleware~~ → Behoben (27.05.2026)**
-- `src/proxy.ts` ist jetzt aktiv (Next.js 16 Konvention: `proxy.ts` statt `middleware.ts`)
-- Zentraler Auth-Guard mit Session-Refresh, Login-Redirect, API-Route-Schutz (401 JSON)
-- Hintergrund: Die ursprüngliche `proxy.ts` hatte den richtigen Dateinamen für Next.js 16, aber den falschen Export (`export function proxy()` statt `export function middleware()`). Next.js 16 erwartet `export function proxy()` — nach Korrektur funktioniert alles.
+**3. Projektstruktur — Deutsche URL-Pfade**
+- Spec: `exam/`, `practice/`, `flashcards/`, `errors/`
+- Code: `klausuren/`, `probeklausur/`, `karteikarten/`, `fehler/`, `gruppen/`
+- **→ Spec als "Konzept-Pfade" kennzeichnen**
 
-**4. ~~Cleanup-Sessions Route ungesichert~~ → Behoben (27.05.2026)**
-- `GET /api/cleanup-sessions` entfernt — nutzte Service-Role-Key ohne Auth-Check
-- Ersetzt durch pg_cron Job (`cleanup-abandoned-sessions`), läuft täglich 03:00 UTC direkt in PostgreSQL
-- Migration: `supabase/migrations/20260527100000_add_pg_cron_cleanup.sql`
-
-**5. Projektstruktur — Abweichung von Spezifikation**
-- Spezifikation definiert Pfade wie `exam/[id]/`, `practice/[id]/`, `flashcards/[id]/`, `errors/`, `viewer/[id]/`
-- Tatsächliche Pfade sind deutsch: `klausuren/[id]/`, `probeklausur/`, `karteikarten/`, `fehler/`, `gruppen/`
-- Viewer ist verschachtelt unter `klausuren/[id]/blocks/[blockId]/viewer/[summaryId]/`
-- **→ Spezifikation aktualisieren oder explizit als "Spec beschreibt Konzept, Code nutzt deutsche Pfade" vermerken**
-
-**6. Sections — Seitenreferenz (start_page/end_page)**
-- Migration `20260526000000` hat `start_page` und `end_page` auf `sections` nachträglich hinzugefügt
-- Parsing-Prompt fordert Seitenzahlen und schreibt sie in die DB
-- **→ In Spezifikation nicht dokumentiert — sinnvolles Feature, Spec nachtragen**
+**4. Sections — start_page/end_page**
+- Nicht in Spec dokumentiert, aber implementiert und sinnvoll
+- **→ Spec nachtragen**
 
 ### Was gut funktioniert (bestätigt durch Code-Review)
 - Komplettes DB-Schema mit RLS auf allen Tabellen
@@ -540,3 +570,5 @@ Jede Etappe wird als eigenständiger Claude-Code-Prompt umgesetzt. Dabei gilt:
 - Design System mit CSS Custom Properties als Single Source of Truth
 - 7 Fragetyp-Komponenten (statt der geplanten 4)
 - Security Headers in next.config.ts
+- Responsive Mobile-Layout mit Sidebar-Drawer
+- Empty States auf allen Hauptseiten

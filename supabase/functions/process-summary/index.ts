@@ -67,7 +67,7 @@ Antworte ausschließlich mit validem JSON — kein Text davor oder danach.
 Sortiere die Sections in der Reihenfolge, in der sie im Dokument erscheinen.`
 
 const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://study-lab-flame.vercel.app",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
 }
@@ -155,11 +155,10 @@ async function callAnthropic(
       headers: {
         "x-api-key": ANTHROPIC_API_KEY,
         "anthropic-version": "2023-06-01",
-        "anthropic-beta": "prompt-caching-2024-07-31",
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
+        model: "claude-sonnet-4-6",
         max_tokens: maxTokens,
         system: [
           {
@@ -193,6 +192,14 @@ async function callAnthropic(
   })
 }
 
+function sanitizeErrorMessage(err: unknown): string {
+  const message = err instanceof Error ? err.message : String(err)
+  if (message.startsWith("Anthropic ")) {
+    return "AI processing failed — please try again"
+  }
+  return message
+}
+
 // ---- Rate limiting --------------------------------------------------------
 
 // deno-lint-ignore no-explicit-any
@@ -204,46 +211,16 @@ async function checkRateLimit(
   action: string,
   maxPerHour: number
 ): Promise<boolean> {
-  const { data: existing } = await supabase
-    .from("rate_limits")
-    .select("count, window_start")
-    .eq("user_id", userId)
-    .eq("action", action)
-    .single()
-
-  const now = new Date()
-  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
-
-  if (!existing) {
-    await supabase.from("rate_limits").insert({
-      user_id: userId,
-      action,
-      window_start: now.toISOString(),
-      count: 1,
-    })
-    return true
-  }
-
-  const windowStart = new Date(existing.window_start)
-  if (windowStart < oneHourAgo) {
-    await supabase
-      .from("rate_limits")
-      .update({ count: 1, window_start: now.toISOString() })
-      .eq("user_id", userId)
-      .eq("action", action)
-    return true
-  }
-
-  if (existing.count >= maxPerHour) {
+  const { data, error } = await supabase.rpc("check_rate_limit", {
+    p_user_id: userId,
+    p_action: action,
+    p_max_per_hour: maxPerHour,
+  })
+  if (error) {
+    console.error("Rate limit check failed:", error.message)
     return false
   }
-
-  await supabase
-    .from("rate_limits")
-    .update({ count: existing.count + 1 })
-    .eq("user_id", userId)
-    .eq("action", action)
-  return true
+  return data as boolean
 }
 
 // ---- Core processing ------------------------------------------------------
@@ -301,7 +278,7 @@ async function processSummary(
     console.error("Parsing phase failed:", message)
     await supabase
       .from("summaries")
-      .update({ processing_status: "failed", processing_error: message })
+      .update({ processing_status: "failed", processing_error: sanitizeErrorMessage(err) })
       .eq("id", summary.id)
     return
   }
@@ -329,7 +306,7 @@ async function processSummary(
       .from("summaries")
       .update({
         processing_status: "failed",
-        processing_error: errMsg,
+        processing_error: sanitizeErrorMessage(errMsg),
       })
       .eq("id", summary.id)
     return
@@ -489,7 +466,7 @@ Deno.serve(async (req: Request) => {
     console.error("processSummary threw unexpectedly:", message)
     await supabase
       .from("summaries")
-      .update({ processing_status: "failed", processing_error: message })
+      .update({ processing_status: "failed", processing_error: sanitizeErrorMessage(err) })
       .eq("id", summaryId)
   }
 

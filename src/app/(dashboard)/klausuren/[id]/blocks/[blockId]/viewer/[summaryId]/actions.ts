@@ -30,6 +30,18 @@ export async function startSectionExamSession(
     .single()
   if (!exam) return { error: "Klausur nicht gefunden." }
 
+  const { data: section } = await supabase
+    .from("sections")
+    .select("id, summary_id, summaries!inner(block_id, blocks!inner(exam_id))")
+    .eq("id", sectionId)
+    .single()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sectionExamId = (section?.summaries as any)?.blocks?.exam_id
+  if (!section || sectionExamId !== examId) {
+    return { error: "Abschnitt nicht gefunden." }
+  }
+
   const { data: questions } = await supabase
     .from("exam_questions")
     .select("id")
