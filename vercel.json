@@ -1,0 +1,4 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "TURBOPACK=0 pnpm run build"
+}
