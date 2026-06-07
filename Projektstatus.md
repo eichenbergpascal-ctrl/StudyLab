@@ -47,6 +47,9 @@ Alle kritischen Tabellen geprüft und abgesichert:
 
 **Migration deployed:** `rls_fix_contributions_and_group_members_insert`
 
+### Dokumentationslücke geschlossen
+- **Processing-Pipeline Modell-Upgrade:** Alle drei Edge Functions (`process-summary`, `generate-section`, `regenerate-content`) laufen bereits auf `claude-sonnet-4-6` — war im Projektplan noch als offen markiert, ist aber längst umgesetzt. Projektplan-Eintrag Etappe 7.5 war veraltet. ✅
+
 ### Noch offen
 - L-4, L-6, L-7 (Tech-Debt, kein Security-Risiko)
 - Invite-Code-Enforcement auf DB-Ebene (bewusst nicht implementiert — `SECURITY DEFINER` Funktion wäre nötig, Risiko akzeptabel)
